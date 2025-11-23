@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ToadLink</string>
+    <string name="media">Media</string>
+    <string name="actions">Actions</string>
+    <string name="files">Files</string>
+    <string name="saved_devices_">Saved devices:</string>
+    <string name="available_devices_">Available devices:</string>
+    <string name="error_generic">Something went wrong</string>
+    <string name="connecting_">Connecting…</string>
+    <string name="execute">Execute</string>
+    <string name="add_action">Add action</string>
+    <string name="edit_action">Edit action</string>
+    <string name="close">Close</string>
+    <string name="name">Name</string>
+    <string name="save">Save</string>
+    <string name="command">Command</string>
+    <string name="no_actions_added">No actions has been added yet</string>
+</resources>
