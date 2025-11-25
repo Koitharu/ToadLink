@@ -17,6 +17,7 @@ import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePort
 import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateUsername
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.storage.DevicesRepository
+import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 
 @HiltViewModel(assistedFactory = AddDeviceViewModel.Factory::class)
@@ -47,6 +48,10 @@ class AddDeviceViewModel @AssistedInject constructor(
     }
 
     private fun addDevice() {
+        state.value = state.value.validate()
+        if (state.value.hasErrors()) {
+            return
+        }
         viewModelScope.launch(Dispatchers.Default) {
             val snapshot = state.updateAndGet {
                 it.copy(isLoading = true)
@@ -65,6 +70,13 @@ class AddDeviceViewModel @AssistedInject constructor(
             }
         }
     }
+
+    private fun AddDeviceState.validate() = copy(
+        portError = when {
+            port !in 1..65535 -> R.string.error_generic
+            else -> 0
+        }
+    )
 
     @AssistedFactory
     interface Factory {

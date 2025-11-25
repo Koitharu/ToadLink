@@ -6,9 +6,14 @@ import org.koitharu.toadlink.ui.nav.Router
 
 class RouterImpl(
     private val backStack: NavBackStack<NavKey>,
-) : Router {
+) : Router, MutableList<NavKey> by backStack {
 
     override fun navigate(destination: NavKey) {
+        backStack.add(destination)
+    }
+
+    override fun changeRoot(destination: NavKey) {
+        backStack.clear()
         backStack.add(destination)
     }
 

@@ -16,4 +16,13 @@
     <string name="save">Save</string>
     <string name="command">Command</string>
     <string name="no_actions_added">No actions has been added yet</string>
+    <string name="select_device">Select device</string>
+    <string name="add_device">Add device</string>
+    <string name="port">Port</string>
+    <string name="host_address">Host address</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="done">Done</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
 </resources>

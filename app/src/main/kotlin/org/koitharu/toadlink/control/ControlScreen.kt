@@ -12,15 +12,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults.rememberTooltipPositionProvider
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,7 +42,9 @@ import org.koitharu.toadlink.actions.ui.list.ActionsContent
 import org.koitharu.toadlink.control.ControlIntent.SwitchSection
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.mpris.ui.PlayerControlContent
+import org.koitharu.toadlink.nav.FindDeviceDestination
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.nav.LocalRouter
 
 @Composable
 fun ControlScreen(deviceId: Int) {
@@ -77,8 +85,26 @@ private fun ControlContent(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                }
-            )
+                },
+                actions = {
+                    val router = LocalRouter.current
+                    TooltipBox(
+                        positionProvider = rememberTooltipPositionProvider(
+                            TooltipAnchorPosition.Above
+                        ),
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.select_device)) } },
+                        state = rememberTooltipState(),
+                    ) {
+                        IconButton(onClick = { router.changeRoot(FindDeviceDestination) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_drop_down),
+                                contentDescription = stringResource(R.string.select_device),
+                            )
+                        }
+                    }
+                },
+
+                )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
@@ -117,6 +143,7 @@ private fun ControlContent(
                     contentPadding = contentPadding,
                     snackbarHostState = snackbarHostState,
                 )
+
                 ControlSection.MPRIS -> PlayerControlContent(
                     contentPadding = contentPadding,
                     snackbarHostState = snackbarHostState,

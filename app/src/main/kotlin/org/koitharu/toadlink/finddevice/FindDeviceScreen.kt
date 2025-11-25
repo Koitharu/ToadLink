@@ -56,7 +56,7 @@ fun FindDeviceScreen() {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is OnError -> snackbarHostState.showSnackbar(effect.error.message.orEmpty())
-                is FindDeviceEffect.OpenDevice -> router.navigate(
+                is FindDeviceEffect.OpenDevice -> router.changeRoot(
                     ControlDestination(effect.deviceId)
                 )
             }
@@ -225,7 +225,7 @@ private fun DeviceItem(
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
         onClick = {
-            router.navigate(
+            router.changeRoot(
                 ControlDestination(device.id)
             )
         }
