@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import org.koitharu.toadlink.core.DeviceDescriptor
+import org.koitharu.toadlink.core.util.firstNotNull
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 
 class SshConnectionManager(
@@ -34,6 +35,8 @@ class SshConnectionManager(
 
     val activeConnection: StateFlow<SshConnection?>
         get() = _activeConnection.asStateFlow()
+
+    suspend fun awaitConnection(): SshConnection = _activeConnection.firstNotNull()
 
     fun connect(
         deviceDescriptor: DeviceDescriptor,

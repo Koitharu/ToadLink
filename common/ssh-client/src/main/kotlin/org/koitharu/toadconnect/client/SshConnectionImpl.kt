@@ -15,6 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import org.koitharu.toadlink.core.DeviceDescriptor
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
+import java.io.InputStream
 
 internal class SshConnectionImpl(
     override val deviceDescriptor: DeviceDescriptor,
@@ -86,13 +87,20 @@ internal class SshConnectionImpl(
         }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun getFileContent(path: String): ByteArray =
-        runInterruptible(Dispatchers.IO) {
+    override suspend fun getFileContent(path: String): ByteArray {
+        resurrectConnection()
+        return runInterruptible(Dispatchers.IO) {
             val client = connection.createSCPClient()
             val output = ByteArrayOutputStream()
             client.get(path, output)
             output.toByteArray()
         }
+    }
+
+    override suspend fun getFileContentStream(path: String): InputStream {
+        resurrectConnection()
+        TODO()
+    }
 
     private suspend fun resurrectConnection() {
         if (!isConnected.value) {

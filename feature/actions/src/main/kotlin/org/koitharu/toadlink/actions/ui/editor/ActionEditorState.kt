@@ -19,7 +19,7 @@ internal data class ActionEditorState(
         get() = name.isNotEmpty() && cmdline.text.isNotEmpty()
 
     constructor(action: RemoteAction?) : this(
-        actionId = action?.id ?: -1,
+        actionId = action?.id ?: 0,
         name = action?.name.orEmpty(),
         cmdline = TextFieldValue(action?.cmdline.orEmpty()),
         cmdlineCompletion = persistentListOf(),

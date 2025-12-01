@@ -1,13 +1,12 @@
 package org.koitharu.toadlink.actions.ui.list
 
 import androidx.compose.runtime.Immutable
-import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.koitharu.toadlink.core.RemoteAction
 
 @Immutable
 internal data class ActionsState(
-    val actions: ImmutableList<RemoteAction>,
+    val actions: PersistentList<ActionItem>,
     val isLoading: Boolean,
 ) {
 

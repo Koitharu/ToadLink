@@ -25,4 +25,8 @@
     <string name="done">Done</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
+    <string name="player_not_playing">Nothing is playing now</string>
+    <string name="player_not_supported">Player control is not supported</string>
+    <string name="player_not_supported_message">You need to install the playerctl package on your remote host to make this feature works</string>
+    <string name="menu">Menu</string>
 </resources>

@@ -1,6 +1,6 @@
 package org.koitharu.toadlink.actions.ui.list
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -21,21 +24,32 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koitharu.toadconnect.client.RemoteProcessException
+import org.koitharu.toadlink.actions.ui.ExecutionState
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorDestination
+import org.koitharu.toadlink.actions.ui.list.ActionsIntent.Execute
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.composables.EmptyState
+import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
+import org.koitharu.toadlink.ui.util.displayMessage
 import org.koitharu.toadlink.ui.util.getDisplayMessage
 import org.koitharu.toadlink.ui.util.themeAttributeSize
 
@@ -59,7 +73,7 @@ fun ActionsContent(
     ActionsList(
         contentPadding = contentPadding,
         state = state,
-        handleIntent = viewModel::handleIntent,
+        handleIntent = viewModel,
     )
 }
 
@@ -67,7 +81,7 @@ fun ActionsContent(
 private fun ActionsList(
     contentPadding: PaddingValues,
     state: ActionsState,
-    handleIntent: (ActionsIntent) -> Unit,
+    handleIntent: MviIntentHandler<ActionsIntent>,
 ) = when {
     state.isLoading -> Box(
         modifier = Modifier
@@ -84,14 +98,13 @@ private fun ActionsList(
 
     else -> LazyColumn(
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(
             items = state.actions,
-            key = { it.id },
+            key = { it.action.id },
             contentType = { RemoteAction::class },
         ) {
-            ActionItem(
+            ActionRow(
                 item = it,
                 handleIntent = handleIntent,
             )
@@ -105,25 +118,13 @@ private fun ActionsList(
 @Composable
 private fun EmptyState(
     modifier: Modifier,
-) = Column(
+) = EmptyState(
     modifier = Modifier
         .fillMaxSize()
         .then(modifier),
-    verticalArrangement = Arrangement.Center,
-    horizontalAlignment = Alignment.CenterHorizontally,
+    icon = painterResource(R.drawable.ic_click),
+    message = stringResource(R.string.no_actions_added),
 ) {
-    Icon(
-        painter = painterResource(R.drawable.ic_click),
-        contentDescription = stringResource(R.string.actions),
-    )
-    Text(
-        modifier = Modifier.padding(
-            top = 16.dp,
-            bottom = 12.dp,
-        ),
-        text = stringResource(R.string.no_actions_added),
-        style = MaterialTheme.typography.titleMedium,
-    )
     val router = LocalRouter.current
     Button(
         onClick = { router.navigate(ActionEditorDestination(null)) }
@@ -133,47 +134,119 @@ private fun EmptyState(
 }
 
 @Composable
-private fun ActionItem(
-    item: RemoteAction,
-    handleIntent: (ActionsIntent) -> Unit,
+private fun ActionRow(
+    item: ActionItem,
+    handleIntent: MviIntentHandler<ActionsIntent>,
 ) {
+    var isMenuExpanded by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
-        onClick = {
-
-        }
+        onClick = { isMenuExpanded = true }
     ) {
         Row(
-            modifier = Modifier.padding(
-                vertical = 8.dp,
-                horizontal = 16.dp
-            ),
+            modifier = Modifier
+                .padding(
+                    vertical = 8.dp,
+                    horizontal = 16.dp
+                )
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box {
                 Icon(
-                    painter = painterResource(R.drawable.ic_pc_phone),
+                    painter = painterResource(R.drawable.ic_cmd),
                     contentDescription = null
                 )
             }
             Column(
-                modifier = Modifier.padding(start = 16.dp)
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .weight(1f),
             ) {
                 Text(
-                    text = item.name,
+                    text = item.action.name,
                     style = MaterialTheme.typography.titleMedium
                 )
-                Text(
-                    modifier = Modifier.padding(top = 2.dp),
-                    text = item.cmdline,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                when (item.state) {
+                    is ExecutionState.Failed -> Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = item.state.error.displayMessage(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    is ExecutionState.Success -> Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = item.state.result,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorResource(R.color.green),
+                    )
+
+                    else -> Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = item.action.cmdline,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            IconButton(
+                onClick = { handleIntent(Execute(item.action)) },
+                enabled = item.state != ExecutionState.Running,
+            ) {
+                AnimatedContent(item.state == ExecutionState.Running) { isRunning ->
+                    if (isRunning) {
+                        LoadingIndicator()
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play),
+                            contentDescription = stringResource(R.string.execute),
+                        )
+                    }
+                }
+            }
+            Box {
+                IconButton(
+                    onClick = { isMenuExpanded = true },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_menu),
+                        contentDescription = stringResource(R.string.menu),
+                    )
+                }
+                ActionMenu(
+                    actionItem = item,
+                    isExpanded = isMenuExpanded,
+                    onDismissRequest = { isMenuExpanded = false },
+                    handleIntent = handleIntent,
                 )
             }
         }
     }
+}
+
+@Composable
+private fun ActionMenu(
+    actionItem: ActionItem,
+    isExpanded: Boolean,
+    onDismissRequest: () -> Unit,
+    handleIntent: MviIntentHandler<ActionsIntent>,
+) = DropdownMenu(
+    expanded = isExpanded,
+    onDismissRequest = onDismissRequest,
+) {
+    val router = LocalRouter.current
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.execute)) },
+        onClick = { handleIntent(Execute(actionItem.action)) },
+        enabled = actionItem.state != ExecutionState.Running,
+    )
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.edit_action)) },
+        onClick = { router.add(ActionEditorDestination(actionItem.action)) },
+    )
 }
 
 @Composable
@@ -200,7 +273,7 @@ private fun AddButton() {
             )
             Text(
                 modifier = Modifier.padding(start = 16.dp),
-                text = "Add device manually",
+                text = stringResource(R.string.add_action),
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -227,8 +300,21 @@ private fun PreviewActionsList() = MaterialTheme {
         contentPadding = PaddingValues.Zero,
         state = ActionsState(
             actions = persistentListOf(
-                RemoteAction(1, "Shutdown", "stub"),
-                RemoteAction(2, "Reboot", "stub"),
+                ActionItem(RemoteAction(1, "Shutdown", "stub"), ExecutionState.None),
+                ActionItem(RemoteAction(2, "Reboot", "stub"), ExecutionState.Running),
+                ActionItem(
+                    action = RemoteAction(3, "Failed action", "stub"),
+                    state = ExecutionState.Failed(
+                        RemoteProcessException(
+                            1,
+                            "No such file or directory"
+                        )
+                    )
+                ),
+                ActionItem(
+                    action = RemoteAction(4, "Success action", "stub"),
+                    state = ExecutionState.Success(LoremIpsum(12).values.joinToString(" ")),
+                ),
             ),
             isLoading = false
         ),

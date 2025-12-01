@@ -14,7 +14,7 @@ class MPRISClient(
     private val connection: SshConnection,
 ) {
 
-    suspend fun isAvailable(): Boolean = try {
+    suspend fun isSupported(): Boolean = try {
         connection.execute("playerctl --version").startsWith("v")
     } catch (e: RemoteProcessException) {
         if (e.exitCode == RemoteProcessException.EXIT_CODE_NOT_FOUND) {

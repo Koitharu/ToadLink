@@ -19,16 +19,20 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -50,6 +54,7 @@ import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.theme.ToadLinkTheme
+import org.koitharu.toadlink.ui.util.getDisplayMessage
 
 @Composable
 fun ActionEditorScreen(
@@ -58,9 +63,21 @@ fun ActionEditorScreen(
     val viewModel = hiltViewModel<ActionEditorViewModel, ActionEditorViewModel.Factory> {
         it.create(action)
     }
+    val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.collectState()
+    val router = LocalRouter.current
+    val context = LocalContext.current
+    LaunchedEffect("effect") {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                ActionEditorEffect.Close -> router.back()
+                is ActionEditorEffect.OnError -> snackbarHostState.showSnackbar(effect.error.getDisplayMessage(context))
+            }
+        }
+    }
     ActionEditorContent(
         state = state,
+        snackbarHostState = snackbarHostState,
         handleIntent = viewModel,
     )
 }
@@ -68,6 +85,7 @@ fun ActionEditorScreen(
 @Composable
 private fun ActionEditorContent(
     state: ActionEditorState,
+    snackbarHostState: SnackbarHostState,
     handleIntent: MviIntentHandler<ActionEditorIntent>,
 ) = Scaffold(
     modifier = Modifier.imePadding(),
@@ -76,7 +94,7 @@ private fun ActionEditorContent(
             title = {
                 Text(
                     stringResource(
-                        if (state.actionId == -1) {
+                        if (state.actionId == 0) {
                             R.string.add_action
                         } else {
                             R.string.edit_action
@@ -98,6 +116,7 @@ private fun ActionEditorContent(
             }
         )
     },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
     content = { padding ->
         Column(
             modifier = Modifier
@@ -224,6 +243,7 @@ private fun PreviewActionEditor() = ToadLinkTheme {
             cmdlineCompletion = persistentListOf(),
             isLoading = false,
         ),
-        handleIntent = MviIntentHandler.NO_OP
+        handleIntent = MviIntentHandler.NO_OP,
+        snackbarHostState = SnackbarHostState(),
     )
 }

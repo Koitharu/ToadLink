@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -44,6 +45,7 @@ import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.DotIndicator
 import org.koitharu.toadlink.ui.composables.ListHeader
 import org.koitharu.toadlink.ui.nav.LocalRouter
+import org.koitharu.toadlink.ui.util.getDisplayMessage
 import org.koitharu.toadlink.ui.util.themeAttributeSize
 
 @Composable
@@ -52,10 +54,11 @@ fun FindDeviceScreen() {
     val state by viewModel.collectState()
     val snackbarHostState = remember { SnackbarHostState() }
     val router = LocalRouter.current
+    val context = LocalContext.current
     LaunchedEffect("errors") {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is OnError -> snackbarHostState.showSnackbar(effect.error.message.orEmpty())
+                is OnError -> snackbarHostState.showSnackbar(effect.error.getDisplayMessage(context))
                 is FindDeviceEffect.OpenDevice -> router.changeRoot(
                     ControlDestination(effect.deviceId)
                 )

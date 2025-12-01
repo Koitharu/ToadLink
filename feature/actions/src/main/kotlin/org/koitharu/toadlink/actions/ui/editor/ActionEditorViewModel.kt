@@ -17,11 +17,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koitharu.toadconnect.client.SshConnectionManager
 import org.koitharu.toadconnect.client.getCmdCompletion
+import org.koitharu.toadlink.actions.ui.editor.ActionEditorEffect.Close
+import org.koitharu.toadlink.actions.ui.editor.ActionEditorEffect.OnError
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.ApplyCompletion
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnCmdlineChanged
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnNameChanged
+import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.Save
 import org.koitharu.toadlink.core.RemoteAction
-import org.koitharu.toadlink.core.util.firstNotNull
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.storage.RemoteActionsRepository
 import org.koitharu.toadlink.ui.mvi.MviViewModel
@@ -31,7 +33,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
     @Assisted action: RemoteAction?,
     private val repository: RemoteActionsRepository,
     private val connectionManager: SshConnectionManager,
-) : MviViewModel<ActionEditorState, ActionEditorIntent, Nothing>(ActionEditorState(action)) {
+) : MviViewModel<ActionEditorState, ActionEditorIntent, ActionEditorEffect>(ActionEditorState(action)) {
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -57,7 +59,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
             it.copy(name = intent.value)
         }
 
-        else -> save()
+        Save -> save()
     }
 
     fun applyCompletion(text: String) {
@@ -79,7 +81,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
     fun save() {
         viewModelScope.launch(Dispatchers.Default) {
             state.update { it.copy(isLoading = true) }
-            val device = connectionManager.activeConnection.firstNotNull().deviceDescriptor
+            val device = connectionManager.awaitConnection().deviceDescriptor
             runCatchingCancellable {
                 val action = RemoteAction(
                     id = state.value.actionId,
@@ -87,8 +89,10 @@ internal class ActionEditorViewModel @AssistedInject constructor(
                     cmdline = state.value.cmdline.text,
                 )
                 repository.store(action, deviceId = device.id)
+            }.onFailure { error ->
+                sendEffect(OnError(error))
             }.onSuccess {
-
+                sendEffect(Close)
             }
             state.update { it.copy(isLoading = false) }
         }

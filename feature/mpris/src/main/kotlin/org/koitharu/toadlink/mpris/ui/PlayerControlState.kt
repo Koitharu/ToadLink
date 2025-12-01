@@ -6,15 +6,17 @@ import org.koitharu.toadlink.mpris.PlayerMetadata
 import org.koitharu.toadlink.mpris.PlayerState
 
 @Immutable
-internal data class PlayerControlState(
-    val state: PlayerState,
-    val metadata: PlayerMetadata?,
-    val cover: Bitmap?,
-) {
+internal sealed interface PlayerControlState {
 
-    constructor() : this(
-        state = PlayerState.UNKNOWN,
-        metadata = null,
-        cover = null,
-    )
+    data object Loading : PlayerControlState
+
+    data object NotPlaying : PlayerControlState
+
+    data object NotSupported : PlayerControlState
+
+    data class Player(
+        val state: PlayerState,
+        val metadata: PlayerMetadata?,
+        val cover: Bitmap?,
+    ) : PlayerControlState
 }

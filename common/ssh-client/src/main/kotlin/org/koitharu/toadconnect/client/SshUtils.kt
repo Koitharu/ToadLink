@@ -13,6 +13,6 @@ suspend fun SshConnection.getCmdCompletion(cmdline: String): ImmutableList<Strin
     if (cmdline.startsWith('-')) {
         return null
     }
-    val res = tryExecute("compgen -c $cmdline").getOrNull() ?: return null
+    val res = tryExecute("compgen -abcdefk $cmdline").getOrNull() ?: return null
     return res.lines().distinct().toImmutableList()
 }

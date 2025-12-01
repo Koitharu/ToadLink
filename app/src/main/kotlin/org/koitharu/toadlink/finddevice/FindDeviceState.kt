@@ -17,6 +17,6 @@ data class FindDeviceState(
         savedDevices = persistentListOf(),
         availableDevices = persistentListOf(),
         isScanning = false,
-        connectedDevice = -1,
+        connectedDevice = 0,
     )
 }

@@ -17,6 +17,7 @@ import kotlinx.coroutines.plus
 import org.koitharu.toadconnect.client.SshConnectionManager
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.mpris.MPRISClient
+import org.koitharu.toadlink.mpris.PlayerState
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Next
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Pause
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Play
@@ -31,7 +32,9 @@ import javax.inject.Inject
 @HiltViewModel
 internal class PlayerControlViewModel @Inject constructor(
     connectionManager: SshConnectionManager,
-) : MviViewModel<PlayerControlState, PlayerControlAction, PlayerControlEffect>(PlayerControlState()) {
+) : MviViewModel<PlayerControlState, PlayerControlAction, PlayerControlEffect>(
+    initialState = PlayerControlState.Loading
+) {
 
     private var intentJob: Job? = null
     private var coverCache = object : LruCache<String, Bitmap>(4) {
@@ -58,9 +61,16 @@ internal class PlayerControlViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             client.collectLatest {
                 if (it == null) {
-                    state.value = PlayerControlState()
+                    state.value = PlayerControlState.NotPlaying
                 } else {
-                    it.observeAll()
+                    val isSupported = runCatchingCancellable {
+                        it.isSupported()
+                    }.getOrDefault(true)
+                    if (isSupported) {
+                        it.observeAll()
+                    } else {
+                        state.value = PlayerControlState.NotSupported
+                    }
                 }
             }
         }
@@ -93,13 +103,17 @@ internal class PlayerControlViewModel @Inject constructor(
             observeState(),
             observeMetadata()
         ) { state, metadata ->
-            PlayerControlState(
+            PlayerControlState.Player(
                 state = state,
                 metadata = metadata,
                 cover = metadata?.artUrl?.let { coverCache.get(it) },
             )
         }.collectLatest {
-            state.value = it
+            state.value = if (it.state == PlayerState.UNKNOWN && it.metadata == null) {
+                PlayerControlState.NotPlaying
+            } else {
+                it
+            }
             val coverUrl = it.metadata?.artUrl
             if (it.cover == null && !coverUrl.isNullOrEmpty()) {
                 val cover = runCatchingCancellable {
