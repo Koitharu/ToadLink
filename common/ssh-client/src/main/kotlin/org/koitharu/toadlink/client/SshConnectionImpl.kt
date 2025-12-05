@@ -1,4 +1,4 @@
-package org.koitharu.toadconnect.client
+package org.koitharu.toadlink.client
 
 import com.trilead.ssh2.ChannelCondition
 import com.trilead.ssh2.Connection
@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import org.koitharu.toadlink.core.DeviceDescriptor
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
-import java.io.InputStream
+import java.io.OutputStream
 
 internal class SshConnectionImpl(
     override val deviceDescriptor: DeviceDescriptor,
@@ -88,18 +88,18 @@ internal class SshConnectionImpl(
     }.flowOn(Dispatchers.IO)
 
     override suspend fun getFileContent(path: String): ByteArray {
-        resurrectConnection()
-        return runInterruptible(Dispatchers.IO) {
-            val client = connection.createSCPClient()
-            val output = ByteArrayOutputStream()
-            client.get(path, output)
-            output.toByteArray()
-        }
+        val output = ByteArrayOutputStream()
+        getFileContent(path, output)
+        return output.toByteArray()
     }
 
-    override suspend fun getFileContentStream(path: String): InputStream {
+    override suspend fun getFileContent(path: String, target: OutputStream) {
         resurrectConnection()
-        TODO()
+        runInterruptible(Dispatchers.IO) {
+            val client = connection.createSCPClient()
+            client.get(path, target)
+            target.flush()
+        }
     }
 
     private suspend fun resurrectConnection() {
@@ -108,7 +108,10 @@ internal class SshConnectionImpl(
                 if (!isConnected.value) {
                     runInterruptible(Dispatchers.IO) {
                         connection.connect()
-                        connection.authenticateWithPassword(deviceDescriptor.username, deviceDescriptor.password)
+                        connection.authenticateWithPassword(
+                            deviceDescriptor.username,
+                            deviceDescriptor.password
+                        )
                         isConnected.value = true
                     }
                 }

@@ -41,6 +41,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import org.koitharu.toadlink.actions.ui.list.ActionsContent
 import org.koitharu.toadlink.control.ControlIntent.SwitchSection
 import org.koitharu.toadlink.core.DeviceDescriptor
+import org.koitharu.toadlink.files.FileManagerContent
 import org.koitharu.toadlink.mpris.ui.PlayerControlContent
 import org.koitharu.toadlink.nav.FindDeviceDestination
 import org.koitharu.toadlink.ui.R
@@ -129,7 +130,7 @@ private fun ControlContent(
                     )
                     NavigationItem(
                         isSelected = state.section == ControlSection.FILES,
-                        icon = R.drawable.ic_folder,
+                        icon = R.drawable.ic_files,
                         label = stringResource(R.string.files),
                         onClick = { handleIntent(SwitchSection(ControlSection.FILES)) }
                     )
@@ -149,7 +150,10 @@ private fun ControlContent(
                     snackbarHostState = snackbarHostState,
                 )
 
-                ControlSection.FILES -> Text("Not implemented")
+                ControlSection.FILES -> FileManagerContent(
+                    contentPadding = contentPadding,
+                    snackbarHostState = snackbarHostState,
+                )
             }
 
             is ControlState.Connecting -> ConnectingState(

@@ -10,7 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.plus
-import org.koitharu.toadconnect.client.SshConnectionManager
+import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.network.NetworkScanner
 import javax.inject.Singleton
 

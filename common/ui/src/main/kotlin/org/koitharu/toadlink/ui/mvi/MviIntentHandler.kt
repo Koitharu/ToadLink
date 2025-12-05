@@ -8,6 +8,6 @@ fun interface MviIntentHandler<in I> {
 
     companion object {
 
-        val NO_OP = MviIntentHandler<Any> { /* no-op */ }
+        val NoOp = MviIntentHandler<Any> { /* no-op */ }
     }
 }

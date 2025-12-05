@@ -1,4 +1,4 @@
-package org.koitharu.toadconnect.client
+package org.koitharu.toadlink.client
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList

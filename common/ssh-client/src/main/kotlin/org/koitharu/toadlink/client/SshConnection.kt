@@ -1,8 +1,8 @@
-package org.koitharu.toadconnect.client
+package org.koitharu.toadlink.client
 
 import kotlinx.coroutines.flow.Flow
 import org.koitharu.toadlink.core.DeviceDescriptor
-import java.io.InputStream
+import java.io.OutputStream
 
 interface SshConnection {
 
@@ -14,5 +14,5 @@ interface SshConnection {
 
     suspend fun getFileContent(path: String): ByteArray
 
-    suspend fun getFileContentStream(path: String): InputStream
+    suspend fun getFileContent(path: String, target: OutputStream)
 }

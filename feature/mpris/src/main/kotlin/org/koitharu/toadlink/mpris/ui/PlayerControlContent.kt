@@ -108,6 +108,6 @@ private fun PreviewPlayerContent() = MaterialTheme {
     PlayerControlMainContent(
         contentPadding = PaddingValues.Zero,
         state = PlayerControlState.NotSupported,
-        intentHandler = MviIntentHandler.NO_OP,
+        intentHandler = MviIntentHandler.NoOp,
     )
 }

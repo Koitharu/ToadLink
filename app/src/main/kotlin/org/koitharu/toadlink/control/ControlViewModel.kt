@@ -8,7 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koitharu.toadconnect.client.SshConnectionManager
+import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.control.ControlState.Connected
 import org.koitharu.toadlink.control.ControlState.Connecting
 import org.koitharu.toadlink.core.util.runCatchingCancellable

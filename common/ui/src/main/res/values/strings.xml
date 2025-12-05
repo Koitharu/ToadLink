@@ -29,4 +29,7 @@
     <string name="player_not_supported">Player control is not supported</string>
     <string name="player_not_supported_message">You need to install the playerctl package on your remote host to make this feature works</string>
     <string name="menu">Menu</string>
+    <string name="file_size_suffixes">B|kB|MB|GB|TB</string>
+    <string name="open_with">Open with</string>
+    <string name="empty_directory_message">This directory is empty</string>
 </resources>

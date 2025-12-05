@@ -71,7 +71,11 @@ fun ActionEditorScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 ActionEditorEffect.Close -> router.back()
-                is ActionEditorEffect.OnError -> snackbarHostState.showSnackbar(effect.error.getDisplayMessage(context))
+                is ActionEditorEffect.OnError -> snackbarHostState.showSnackbar(
+                    effect.error.getDisplayMessage(
+                        context
+                    )
+                )
             }
         }
     }
@@ -243,7 +247,7 @@ private fun PreviewActionEditor() = ToadLinkTheme {
             cmdlineCompletion = persistentListOf(),
             isLoading = false,
         ),
-        handleIntent = MviIntentHandler.NO_OP,
+        handleIntent = MviIntentHandler.NoOp,
         snackbarHostState = SnackbarHostState(),
     )
 }

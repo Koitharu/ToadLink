@@ -1,0 +1,95 @@
+package org.koitharu.toadlink.files.data
+
+import android.webkit.MimeTypeMap
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
+import org.koitharu.toadlink.client.SshConnection
+import org.koitharu.toadlink.core.fs.MimeType
+import org.koitharu.toadlink.core.fs.MimeType.Companion.toMimeTypeOrNull
+import org.koitharu.toadlink.core.fs.SshFile
+import org.koitharu.toadlink.core.fs.SshPath
+import org.koitharu.toadlink.core.util.runCatchingCancellable
+import org.koitharu.toadlink.core.util.splitByWhitespace
+import org.koitharu.toadlink.core.util.unescape
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+class SshFileManager(
+    private val connection: SshConnection,
+) {
+
+    private val dateFormat = SimpleDateFormat("yyyy-mm-dd HH:MM", Locale.ROOT)
+
+    suspend fun resolvePath(path: String): SshPath = runCatchingCancellable {
+        connection.execute("realpath $path")
+    }.recoverCatching {
+        connection.execute("readlink -f $path")
+    }.map {
+        SshPath(it)
+    }.getOrThrow()
+
+    suspend fun getFileType(
+        path: String,
+    ): MimeType = connection.execute(
+        "file -bNr --mime-type \"$path\""
+    ).toMimeTypeOrNull() ?: MimeType.UNKNOWN
+
+    suspend fun listFiles(
+        path: SshPath,
+        includeHidden: Boolean,
+    ): ImmutableList<SshFile> {
+        val command = buildString {
+            append("ls -lQk1")
+            if (includeHidden) {
+                append('A')
+            }
+            append(" --time-style=long-iso --time=mtime \"")
+            append(path)
+            append('"')
+        }
+        return connection.execute(command)
+            .lines()
+            .mapNotNull { line ->
+                line.parseFile(path)
+            }.toPersistentList()
+    }
+
+    private fun String.parseFile(parentPath: SshPath): SshFile? {
+        val parts = splitByWhitespace()
+        if (parts.size < 8) {
+            return null
+        }
+        val dateString = parts[5] + " " + parts[6]
+        val name = parts[7].unquote().unescape()
+        val isDirectory = parts[0].firstOrNull() == 'd'
+        return SshFile(
+            path = parentPath.resolve(name),
+            size = parts[4].toLong(),
+            lastModified = dateFormat.parse(dateString)?.time ?: 0L,
+            owner = parts[2],
+            symlinkTarget = if (parts[0].firstOrNull() == 'l') {
+                parts.getOrNull(9)?.unquote()?.unescape()
+            } else {
+                null
+            },
+            type = if (isDirectory) {
+                MimeType.DIRECTORY
+            } else {
+                getMimeType(name) ?: MimeType.UNKNOWN
+            }
+        )
+    }
+
+    private fun String.unquote() = removeSurrounding("\"")
+
+    private fun getMimeType(fileName: String) = getNormalizedExtension(fileName)?.let {
+        MimeTypeMap.getSingleton().getMimeTypeFromExtension(it)
+    }?.toMimeTypeOrNull()
+
+    private fun getNormalizedExtension(name: String): String? = name
+        .lowercase()
+        .removeSuffix("~")
+        .removeSuffix(".tmp")
+        .substringAfterLast('.', "")
+        .takeIf { it.length in 1..5 }
+}

@@ -2,12 +2,13 @@ package org.koitharu.toadlink.finddevice
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koitharu.toadconnect.client.SshConnectionManager
+import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.finddevice.FindDeviceEffect.OnError
 import org.koitharu.toadlink.finddevice.FindDeviceEffect.OpenDevice
@@ -28,11 +29,20 @@ class FindDeviceViewModel @Inject constructor(
     private var networkScanningJob: Job = scanLocalNetwork()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             devicesRepository.observeAll()
                 .collect { savedDevices ->
                     state.update { it.copy(savedDevices = savedDevices) }
                 }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            connectionManager.activeConnection.collect { connectedDevice ->
+                state.update {
+                    it.copy(
+                        connectedDevice = connectedDevice?.deviceDescriptor?.id ?: 0
+                    )
+                }
+            }
         }
     }
 

@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import org.koitharu.toadconnect.client.RemoteProcessException
-import org.koitharu.toadconnect.client.SshConnection
+import org.koitharu.toadlink.client.RemoteProcessException
+import org.koitharu.toadlink.client.SshConnection
 
 class MPRISClient(
     private val connection: SshConnection,

@@ -1,6 +1,7 @@
-package org.koitharu.toadconnect.client
+package org.koitharu.toadlink.client
 
 import com.trilead.ssh2.Connection
+import com.trilead.ssh2.log.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -74,6 +75,13 @@ class SshConnectionManager(
             if (!connected) {
                 _activeConnection.compareAndSet(connection, null)
             }
+        }
+    }
+
+    companion object {
+
+        fun setLoggingEnabled(isEnabled: Boolean) {
+            Logger.enabled = isEnabled
         }
     }
 }

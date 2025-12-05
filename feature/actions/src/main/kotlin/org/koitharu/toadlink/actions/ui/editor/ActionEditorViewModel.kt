@@ -15,14 +15,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koitharu.toadconnect.client.SshConnectionManager
-import org.koitharu.toadconnect.client.getCmdCompletion
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorEffect.Close
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorEffect.OnError
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.ApplyCompletion
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnCmdlineChanged
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnNameChanged
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.Save
+import org.koitharu.toadlink.client.SshConnectionManager
+import org.koitharu.toadlink.client.getCmdCompletion
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.storage.RemoteActionsRepository

@@ -1,4 +1,4 @@
-package org.koitharu.toadconnect.client
+package org.koitharu.toadlink.client
 
 class RemoteProcessException(
     val exitCode: Int,

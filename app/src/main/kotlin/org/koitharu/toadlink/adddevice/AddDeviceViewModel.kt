@@ -9,12 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import org.koitharu.toadconnect.client.SshConnectionManager
 import org.koitharu.toadlink.adddevice.AddDeviceIntent.SaveDevice
 import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateHostname
 import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePassword
 import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePort
 import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateUsername
+import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.storage.DevicesRepository
 import org.koitharu.toadlink.ui.R

@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koitharu.toadconnect.client.SshConnectionManager
 import org.koitharu.toadlink.actions.ui.ExecutionState
 import org.koitharu.toadlink.actions.ui.list.ActionsIntent.Execute
+import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.storage.RemoteActionsRepository

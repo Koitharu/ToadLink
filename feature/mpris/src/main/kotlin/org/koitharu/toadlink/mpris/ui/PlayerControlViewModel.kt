@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import org.koitharu.toadconnect.client.SshConnectionManager
+import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.mpris.MPRISClient
 import org.koitharu.toadlink.mpris.PlayerState
