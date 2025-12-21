@@ -3,6 +3,9 @@ package org.koitharu.toadlink.files.data
 import android.webkit.MimeTypeMap
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.koitharu.toadlink.client.SshConnection
 import org.koitharu.toadlink.core.fs.MimeType
 import org.koitharu.toadlink.core.fs.MimeType.Companion.toMimeTypeOrNull
@@ -12,6 +15,7 @@ import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.core.util.splitByWhitespace
 import org.koitharu.toadlink.core.util.unescape
 import java.text.SimpleDateFormat
+import java.util.EnumMap
 import java.util.Locale
 
 class SshFileManager(
@@ -27,6 +31,21 @@ class SshFileManager(
     }.map {
         SshPath(it)
     }.getOrThrow()
+
+    suspend fun getUserHome(): SshPath = SshPath(
+        path = connection.execute("xdg-user-dir")
+    )
+
+    suspend fun getXdgUserDir(dir: XdgUserDir): SshPath = SshPath(
+        path = connection.execute("xdg-user-dir ${dir.name}")
+    )
+
+    suspend fun getXdgUserDirs(): Map<XdgUserDir, SshPath?> = coroutineScope {
+        val homeDir = getUserHome()
+        XdgUserDir.entries.map { xdgUserDir ->
+            async { xdgUserDir to getXdgUserDir(xdgUserDir).takeUnless { it == homeDir } }
+        }.awaitAll().toMap(EnumMap(XdgUserDir::class.java))
+    }
 
     suspend fun getFileType(
         path: String,

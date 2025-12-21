@@ -40,7 +40,10 @@ internal class FileManagerViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private var loadJob: Job = viewModelScope.launch(Dispatchers.Default) {
-        loadDirectory(state.value.path)
+        val home = runCatchingCancellable {
+            fileManager.firstNotNull().getUserHome()
+        }.getOrDefault(state.value.path)
+        loadDirectory(home)
     }
     private var transferJob: Job? = null
 
