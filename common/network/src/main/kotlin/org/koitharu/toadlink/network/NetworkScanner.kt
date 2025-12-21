@@ -1,6 +1,5 @@
 package org.koitharu.toadlink.network
 
-import android.content.Context
 import android.net.wifi.WifiManager
 import android.text.format.Formatter
 import kotlinx.collections.immutable.ImmutableList
@@ -17,7 +16,7 @@ import java.net.Socket
 import java.util.concurrent.TimeUnit
 
 class NetworkScanner(
-    private val context: Context,
+    private val wifiManager: WifiManager,
 ) {
 
     fun observeLocalNetwork(): Flow<ImmutableList<String>> = channelFlow<IpAddress> {
@@ -39,7 +38,6 @@ class NetworkScanner(
     }
 
     private fun getLocalIpAddress(): String? {
-        val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val wifiInfo = wifiManager.connectionInfo
         val ipAddress = wifiInfo.getIpAddress()
         return Formatter.formatIpAddress(ipAddress)

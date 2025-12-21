@@ -1,8 +1,8 @@
 package org.koitharu.toadlink.storage.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import org.koitharu.toadlink.storage.entity.DeviceEntity
 
@@ -15,6 +15,6 @@ internal abstract class DevicesDao {
     @Query("SELECT * FROM devices WHERE id = :id")
     abstract suspend fun find(id: Int): DeviceEntity
 
-    @Insert
-    abstract suspend fun insert(entity: DeviceEntity)
+    @Upsert
+    abstract suspend fun upsert(entity: DeviceEntity)
 }

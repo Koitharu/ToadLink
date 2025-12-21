@@ -83,5 +83,14 @@ class SshConnectionManager(
         fun setLoggingEnabled(isEnabled: Boolean) {
             Logger.enabled = isEnabled
         }
+
+        suspend fun getHostKey(
+            hostname: String,
+            port: Int,
+        ): ByteArray = runInterruptible(Dispatchers.IO) {
+            val connection = Connection(hostname, port)
+            connection.connect()
+            connection.connectionInfo.serverHostKey
+        }
     }
 }

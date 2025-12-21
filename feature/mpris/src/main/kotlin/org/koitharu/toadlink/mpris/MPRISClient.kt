@@ -9,10 +9,14 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import org.koitharu.toadlink.client.RemoteProcessException
 import org.koitharu.toadlink.client.SshConnection
+import org.koitharu.toadlink.core.DeviceDescriptor
 
 class MPRISClient(
     private val connection: SshConnection,
 ) {
+
+    val device: DeviceDescriptor
+        get() = connection.deviceDescriptor
 
     suspend fun isSupported(): Boolean = try {
         connection.execute("playerctl --version").startsWith("v")

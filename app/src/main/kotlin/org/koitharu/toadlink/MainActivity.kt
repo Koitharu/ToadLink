@@ -1,5 +1,7 @@
 package org.koitharu.toadlink
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,5 +20,12 @@ class MainActivity : ComponentActivity() {
                 MainNav()
             }
         }
+    }
+
+    class IntentBuilder(context: Context) {
+
+        private val intent = Intent(context, MainActivity::class.java)
+
+        fun build() = intent
     }
 }

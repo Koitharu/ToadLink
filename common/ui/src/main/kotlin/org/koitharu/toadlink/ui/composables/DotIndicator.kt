@@ -15,7 +15,7 @@ fun DotIndicator(
     color: Color,
 ) = Surface(
     modifier = Modifier
-        .size(4.dp)
+        .size(6.dp)
         .then(modifier),
     shape = CircleShape,
     color = color,

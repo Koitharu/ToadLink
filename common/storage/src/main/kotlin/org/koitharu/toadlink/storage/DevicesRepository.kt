@@ -20,6 +20,6 @@ class DevicesRepository @Inject internal constructor(
         .map { it.map { x -> x.toDeviceDescriptor() }.toImmutableList() }
 
     suspend fun store(deviceDescriptor: DeviceDescriptor) {
-        db.devicesDao.insert(DeviceEntity(deviceDescriptor))
+        db.devicesDao.upsert(DeviceEntity(deviceDescriptor))
     }
 }

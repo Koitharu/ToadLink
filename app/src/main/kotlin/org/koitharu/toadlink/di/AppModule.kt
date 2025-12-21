@@ -1,12 +1,11 @@
 package org.koitharu.toadlink.di
 
-import android.content.Context
+import android.net.wifi.WifiManager
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.plus
@@ -27,8 +26,8 @@ class AppModule {
     @Provides
     @Singleton
     fun provideNetworkScanner(
-        @ApplicationContext context: Context,
+        wifiManager: WifiManager,
     ) = NetworkScanner(
-        context = context
+        wifiManager = wifiManager,
     )
 }

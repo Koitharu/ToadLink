@@ -1,9 +1,8 @@
 package org.koitharu.toadlink.storage.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import org.koitharu.toadlink.storage.entity.RemoteActionEntity
 
@@ -19,11 +18,8 @@ internal abstract class RemoteActionsDao {
     @Query("SELECT * FROM actions WHERE id = :id")
     abstract suspend fun get(id: Int): RemoteActionEntity
 
-    @Insert
-    abstract suspend fun insert(entity: RemoteActionEntity)
-
-    @Update
-    abstract suspend fun update(entity: RemoteActionEntity)
+    @Upsert
+    abstract suspend fun upsert(entity: RemoteActionEntity)
 
     @Query("DELETE FROM actions WHERE id = :id")
     abstract suspend fun delete(id: Int)

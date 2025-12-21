@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
@@ -24,7 +27,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -44,6 +49,7 @@ import org.koitharu.toadlink.nav.ControlDestination
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.DotIndicator
 import org.koitharu.toadlink.ui.composables.ListHeader
+import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.util.getDisplayMessage
 import org.koitharu.toadlink.ui.util.themeAttributeSize
@@ -68,7 +74,7 @@ fun FindDeviceScreen() {
     FindDeviceContent(
         state = state,
         snackbarHostState = snackbarHostState,
-        handleIntent = viewModel::handleIntent
+        handleIntent = viewModel,
     )
 }
 
@@ -76,7 +82,7 @@ fun FindDeviceScreen() {
 private fun FindDeviceContent(
     state: FindDeviceState,
     snackbarHostState: SnackbarHostState,
-    handleIntent: (FindDeviceIntent) -> Unit,
+    handleIntent: MviIntentHandler<FindDeviceIntent>,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -220,8 +226,9 @@ private fun DeviceItem(
 private fun DeviceItem(
     device: DeviceDescriptor,
     isConnected: Boolean,
-    handleIntent: (FindDeviceIntent) -> Unit,
+    handleIntent: MviIntentHandler<FindDeviceIntent>,
 ) {
+    var isMenuExpanded by remember { mutableStateOf(false) }
     val router = LocalRouter.current
     Surface(
         modifier = Modifier
@@ -249,12 +256,13 @@ private fun DeviceItem(
                     DotIndicator(
                         modifier = Modifier
                             .align(Alignment.BottomEnd),
-                        color = colorResource(R.color.teal_200)
+                        color = colorResource(R.color.toad)
                     )
                 }
             }
             Column(
                 modifier = Modifier.padding(start = 16.dp)
+                    .weight(1f)
             ) {
                 Text(
                     text = device.displayName,
@@ -267,9 +275,49 @@ private fun DeviceItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Box {
+                IconButton(
+                    onClick = { isMenuExpanded = true },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_menu),
+                        contentDescription = stringResource(R.string.menu),
+                    )
+                }
+                DeviceContextMenu(
+                    device = device,
+                    isExpanded = isMenuExpanded,
+                    onDismissRequest = { isMenuExpanded = false },
+                    handleIntent = handleIntent,
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun DeviceContextMenu(
+    device: DeviceDescriptor,
+    isExpanded: Boolean,
+    onDismissRequest: () -> Unit,
+    handleIntent: MviIntentHandler<FindDeviceIntent>,
+) = DropdownMenu(
+    expanded = isExpanded,
+    onDismissRequest = onDismissRequest,
+) {
+    val router = LocalRouter.current
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.edit)) },
+        onClick = {
+
+        },
+    )
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.remove)) },
+        onClick = { },
+    )
+}
+
 
 @Preview
 @Composable

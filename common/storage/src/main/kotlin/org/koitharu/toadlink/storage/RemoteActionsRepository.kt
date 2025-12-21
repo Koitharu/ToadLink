@@ -18,7 +18,7 @@ class RemoteActionsRepository @Inject internal constructor(
         .map { it.map { x -> x.toRemoteAction() }.toImmutableList() }
 
     suspend fun store(action: RemoteAction, deviceId: Int) {
-        db.actionsDao.insert(
+        db.actionsDao.upsert(
             RemoteActionEntity(
                 action = action,
                 deviceId = deviceId,
