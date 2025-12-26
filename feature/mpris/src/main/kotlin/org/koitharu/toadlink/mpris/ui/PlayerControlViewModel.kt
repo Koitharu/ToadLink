@@ -1,7 +1,5 @@
 package org.koitharu.toadlink.mpris.ui
 
-import android.graphics.Bitmap
-import android.util.LruCache
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -37,17 +35,6 @@ internal class PlayerControlViewModel @Inject constructor(
 ) {
 
     private var intentJob: Job? = null
-    private var coverCache = object : LruCache<String, Bitmap>(4) {
-        override fun entryRemoved(
-            evicted: Boolean,
-            key: String?,
-            oldValue: Bitmap?,
-            newValue: Bitmap?,
-        ) {
-            super.entryRemoved(evicted, key, oldValue, newValue)
-            oldValue?.recycle()
-        }
-    }
 
     private val client = connectionManager.activeConnection.mapLatest { connection ->
         if (connection == null) {
@@ -88,7 +75,7 @@ internal class PlayerControlViewModel @Inject constructor(
                     Play -> mpris.play()
                     PlayPause -> mpris.playPause()
                     Prev -> mpris.previousTrack()
-                    is Rewind -> mpris.rewind(intent.delta)
+                    is Rewind -> mpris.fastForward(intent.delta)
                     is Seek -> mpris.setPosition(intent.position)
                 }
             }.onFailure { error ->
@@ -106,7 +93,7 @@ internal class PlayerControlViewModel @Inject constructor(
             PlayerControlState.Player(
                 state = state,
                 metadata = metadata,
-                cover = metadata?.artUrl?.let { coverCache.get(it) },
+                cover = metadata?.artUrl?.let { peekCoverArt(it) },
             )
         }.collectLatest {
             state.value = if (it.state == PlayerState.UNKNOWN && it.metadata == null) {
@@ -121,7 +108,6 @@ internal class PlayerControlViewModel @Inject constructor(
                 }.onFailure { error ->
                     error.printStackTrace()
                 }.getOrNull()
-                coverCache.put(coverUrl, cover)
                 state.value = it.copy(cover = cover)
             }
         }

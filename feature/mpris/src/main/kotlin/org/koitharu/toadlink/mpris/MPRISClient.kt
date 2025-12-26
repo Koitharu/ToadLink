@@ -15,6 +15,8 @@ class MPRISClient(
     private val connection: SshConnection,
 ) {
 
+    private val coverArtCache = CoverArtCache()
+
     val device: DeviceDescriptor
         get() = connection.deviceDescriptor
 
@@ -40,11 +42,15 @@ class MPRISClient(
         connection.execute("playerctl play-pause")
     }
 
-    suspend fun skip(seconds: Int) {
-        connection.execute("playerctl position +$seconds")
+    suspend fun fastForward(seconds: Int = 10) {
+        if (seconds < 0) {
+            rewind(seconds)
+        } else {
+            connection.execute("playerctl position +$seconds")
+        }
     }
 
-    suspend fun rewind(seconds: Int) {
+    suspend fun rewind(seconds: Int = 10) {
         connection.execute("playerctl position -$seconds")
     }
 
@@ -70,10 +76,16 @@ class MPRISClient(
         return parseState(rawValue)
     }
 
+    fun peekCoverArt(url: String): Bitmap {
+        return coverArtCache[url]
+    }
+
     suspend fun getCoverArt(url: String): Bitmap {
         val path = url.removePrefix("file://") // todo more flexible
         val bytes = connection.getFileContent(path)
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size).also {
+            coverArtCache.put(url, it)
+        }
     }
 
     fun observeState(): Flow<PlayerState> {
