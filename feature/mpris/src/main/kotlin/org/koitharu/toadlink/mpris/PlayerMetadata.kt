@@ -45,7 +45,7 @@ data class PlayerMetadata(
                     ?.let { TimeUnit.MICROSECONDS.toSeconds(it).toInt() } ?: 0,
                 length = values[5].toLongOrNull()
                     ?.let { TimeUnit.MICROSECONDS.toSeconds(it).toInt() } ?: 0,
-                artUrl = values[6].nullIfEmpty(),
+                artUrl = values[6].nullIfEmpty()?.replace("file://", "ssh://"),
             )
         }
     }

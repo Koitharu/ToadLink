@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
 import org.koitharu.toadlink.core.DeviceDescriptor
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
@@ -87,17 +90,20 @@ internal class SshConnectionImpl(
         }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun getFileContent(path: String): ByteArray {
-        val output = ByteArrayOutputStream()
-        getFileContent(path, output)
-        return output.toByteArray()
+    override suspend fun getFileContent(path: String): BufferedSource {
+        val target = Buffer()
+        getFileContent(path, target)
+        return target
     }
 
-    override suspend fun getFileContent(path: String, target: OutputStream) {
+    override suspend fun getFileContent(
+        path: String,
+        target: BufferedSink,
+    ) {
         resurrectConnection()
         runInterruptible(Dispatchers.IO) {
             val client = connection.createSCPClient()
-            client.get(path, target)
+            client.get(path, target.outputStream())
             target.flush()
         }
     }

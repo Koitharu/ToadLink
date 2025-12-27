@@ -15,4 +15,5 @@ kotlin {
 dependencies {
     implementation(project(":common:core"))
     implementation(libs.connectbot.sshlib)
+    implementation(libs.okio)
 }

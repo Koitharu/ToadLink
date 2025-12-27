@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okio.buffer
+import okio.sink
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.fs.SshFile
 import org.koitharu.toadlink.core.fs.SshPath
@@ -73,7 +75,7 @@ internal class FileManagerViewModel @Inject constructor(
             try {
                 val connection = connectionManager.awaitConnection()
                 val target = localFileCache.createTempFile(file.name)
-                target.outputStream().use {
+                target.sink().buffer().use {
                     connection.getFileContent(file.path.toString(), it)
                 }
                 sendEffect(FileManagerEffect.OpenExternal(localFileCache.getFileUri(target)))

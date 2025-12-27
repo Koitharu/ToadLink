@@ -132,18 +132,22 @@ class ConnectionService : LifecycleService() {
         val mprisClient = MPRISClient(connection)
         val notificationId = connection.deviceDescriptor.id
         MediaSessionHelper(this, mprisClient).use { mediaSessionHelper ->
-            combine(
-                mprisClient.observeMetadata(),
-                mprisClient.observeState(),
-                ::Pair,
-            ).collectLatest { (metadata, state) ->
-                if (metadata != null) {
-                    val mediaSession = mediaSessionHelper.getMediaSession(metadata, state)
-                    val notification = createMediaNotification(mediaSession)
-                    notificationManager.notify(TAG_MEDIA, notificationId, notification)
-                } else {
-                    notificationManager.cancel(TAG_MEDIA, notificationId)
+            try {
+                combine(
+                    mprisClient.observeMetadata(),
+                    mprisClient.observeState(),
+                    ::Pair,
+                ).collectLatest { (metadata, state) ->
+                    if (metadata != null) {
+                        val mediaSession = mediaSessionHelper.getMediaSession(metadata, state)
+                        val notification = createMediaNotification(mediaSession)
+                        notificationManager.notify(TAG_MEDIA, notificationId, notification)
+                    } else {
+                        notificationManager.cancel(TAG_MEDIA, notificationId)
+                    }
                 }
+            } finally {
+                notificationManager.cancel(TAG_MEDIA, notificationId)
             }
         }
     }

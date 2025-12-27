@@ -4,12 +4,13 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.koitharu.toadlink.client.SshConnectionManager
@@ -26,6 +27,7 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Seek
 import org.koitharu.toadlink.mpris.ui.PlayerControlEffect.OnError
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 internal class PlayerControlViewModel @Inject constructor(
@@ -85,7 +87,7 @@ internal class PlayerControlViewModel @Inject constructor(
         }
     }
 
-    private suspend fun MPRISClient.observeAll() = coroutineScope {
+    private suspend fun MPRISClient.observeAll() {
         combine(
             observeState(),
             observeMetadata()
@@ -93,23 +95,16 @@ internal class PlayerControlViewModel @Inject constructor(
             PlayerControlState.Player(
                 state = state,
                 metadata = metadata,
-                cover = metadata?.artUrl?.let { peekCoverArt(it) },
             )
-        }.collectLatest {
-            state.value = if (it.state == PlayerState.UNKNOWN && it.metadata == null) {
-                PlayerControlState.NotPlaying
-            } else {
-                it
+        }.timeout(4.seconds)
+            .catch { error ->
+                state.value = PlayerControlState.Error(error)
+            }.collectLatest {
+                state.value = if (it.state == PlayerState.UNKNOWN && it.metadata == null) {
+                    PlayerControlState.NotPlaying
+                } else {
+                    it
+                }
             }
-            val coverUrl = it.metadata?.artUrl
-            if (it.cover == null && !coverUrl.isNullOrEmpty()) {
-                val cover = runCatchingCancellable {
-                    getCoverArt(coverUrl)
-                }.onFailure { error ->
-                    error.printStackTrace()
-                }.getOrNull()
-                state.value = it.copy(cover = cover)
-            }
-        }
     }
 }

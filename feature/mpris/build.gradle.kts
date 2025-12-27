@@ -56,4 +56,5 @@ dependencies {
     ksp(libs.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.viewmodel.compose)
     implementation(libs.androidx.lifecycle.service)
+    implementation(libs.coil.compose)
 }

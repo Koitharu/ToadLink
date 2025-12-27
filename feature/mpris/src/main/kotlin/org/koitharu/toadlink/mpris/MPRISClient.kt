@@ -15,8 +15,6 @@ class MPRISClient(
     private val connection: SshConnection,
 ) {
 
-    private val coverArtCache = CoverArtCache()
-
     val device: DeviceDescriptor
         get() = connection.deviceDescriptor
 
@@ -74,18 +72,6 @@ class MPRISClient(
     suspend fun getPlayerStatus(): PlayerState {
         val rawValue = connection.execute("playerctl status")
         return parseState(rawValue)
-    }
-
-    fun peekCoverArt(url: String): Bitmap {
-        return coverArtCache[url]
-    }
-
-    suspend fun getCoverArt(url: String): Bitmap {
-        val path = url.removePrefix("file://") // todo more flexible
-        val bytes = connection.getFileContent(path)
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size).also {
-            coverArtCache.put(url, it)
-        }
     }
 
     fun observeState(): Flow<PlayerState> {

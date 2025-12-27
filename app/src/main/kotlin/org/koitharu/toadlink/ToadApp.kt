@@ -4,14 +4,18 @@ import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.flowWithLifecycle
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.service.ConnectionService
+import org.koitharu.toadlink.utils.coil.SshImageFetcher
 import javax.inject.Inject
 
 @HiltAndroidApp
-class ToadApp : Application() {
+class ToadApp : Application(), SingletonImageLoader.Factory {
 
     @Inject
     lateinit var connectionManager: SshConnectionManager
@@ -21,6 +25,13 @@ class ToadApp : Application() {
         SshConnectionManager.setLoggingEnabled(true) // TODO false for release
         observeConnection()
     }
+
+    override fun newImageLoader(
+        context: PlatformContext,
+    ): ImageLoader = ImageLoader.Builder(applicationContext)
+        .components {
+            add(SshImageFetcher.Factory(connectionManager))
+        }.build()
 
     private fun observeConnection() {
         val lifecycle = ProcessLifecycleOwner.get().lifecycle

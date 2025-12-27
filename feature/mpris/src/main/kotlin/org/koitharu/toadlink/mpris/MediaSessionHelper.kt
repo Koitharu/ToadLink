@@ -6,6 +6,10 @@ import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import androidx.core.app.PendingIntentCompat
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.toBitmap
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -61,9 +65,12 @@ class MediaSessionHelper(
 
     suspend fun getMediaSession(metadata: PlayerMetadata, state: PlayerState): MediaSession {
         val coverArt = metadata.artUrl?.let { coverUrl ->
-            runCatchingCancellable {
-                client.getCoverArt(coverUrl)
-            }.getOrNull()
+            SingletonImageLoader.get(context)
+                .execute(
+                    ImageRequest.Builder(context)
+                        .data(coverUrl)
+                        .build()
+                ).image?.toBitmap()
         }
         metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, coverArt);
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, metadata.title)

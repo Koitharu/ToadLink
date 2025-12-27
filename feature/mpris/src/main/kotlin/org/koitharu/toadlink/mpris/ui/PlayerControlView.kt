@@ -30,13 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import org.koitharu.toadlink.core.util.formatTimeSeconds
 import org.koitharu.toadlink.mpris.PlayerMetadata
 import org.koitharu.toadlink.mpris.PlayerState
@@ -52,7 +55,6 @@ fun PlayerControlView(
     modifier: Modifier = Modifier,
     metadata: PlayerMetadata?,
     state: PlayerState,
-    coverArt: Bitmap?,
     isLoading: Boolean,
     handleAction: (PlayerControlAction) -> Unit,
 ) = Column(
@@ -63,7 +65,20 @@ fun PlayerControlView(
     verticalArrangement = Arrangement.Center,
     horizontalAlignment = Alignment.CenterHorizontally,
 ) {
-    CoverArt(coverArt)
+    val coverPlaceholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainer)
+    AsyncImage(
+        modifier = Modifier
+            .size(260.dp)
+            .padding(bottom = 16.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .aspectRatio(1f),
+        model = metadata?.artUrl,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        placeholder = coverPlaceholder,
+        error = coverPlaceholder,
+        fallback = coverPlaceholder,
+    )
     Text(
         text = metadata?.title.orEmpty(),
         modifier = Modifier.padding(top = 8.dp),
@@ -239,7 +254,6 @@ private fun PreviewPlayerControlView() = PlayerControlView(
         artUrl = null
     ),
     state = PlayerState.PAUSED,
-    coverArt = null,
     isLoading = false,
     handleAction = {}
 )
@@ -257,7 +271,6 @@ private fun PreviewPlayerControlViewLoading() = PlayerControlView(
         artUrl = null
     ),
     state = PlayerState.PAUSED,
-    coverArt = null,
     isLoading = true,
     handleAction = {}
 )

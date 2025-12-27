@@ -26,6 +26,7 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlEffect.OnError
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.EmptyState
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
+import org.koitharu.toadlink.ui.util.displayMessage
 import org.koitharu.toadlink.ui.util.getDisplayMessage
 
 @Composable
@@ -96,10 +97,17 @@ private fun PlayerControlMainContent(
             modifier = Modifier.padding(contentPadding),
             metadata = state.metadata,
             state = state.state,
-            coverArt = state.cover,
             isLoading = false,
             handleAction = intentHandler::handleIntent,
         )
+
+    is PlayerControlState.Error -> EmptyState(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+        message = state.error.displayMessage(),
+        icon = painterResource(R.drawable.ic_music_off),
+    )
 }
 
 @Preview
