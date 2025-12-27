@@ -41,13 +41,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.koitharu.toadlink.core.fs.MimeType
-import org.koitharu.toadlink.core.fs.SshFile
-import org.koitharu.toadlink.core.fs.SshPath
+import okio.Path.Companion.toPath
 import org.koitharu.toadlink.files.FileManagerEffect.OnError
 import org.koitharu.toadlink.files.FileManagerEffect.OpenExternal
 import org.koitharu.toadlink.files.FileManagerIntent.CancelFileTransfer
 import org.koitharu.toadlink.files.FileManagerIntent.NavigateUp
+import org.koitharu.toadlink.files.fs.MimeType
+import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.files.utils.formatFileSize
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
@@ -327,10 +327,10 @@ private fun FileSummary(
 @Preview
 private fun PreviewFilesList() = FilesList(
     state = FileManagerState(
-        path = SshPath("/home/user"),
+        path = "/home/user".toPath(),
         files = persistentListOf(
             SshFile(
-                path = SshPath("/home/user/Documents"),
+                path = "/home/user/Documents".toPath(),
                 size = 14304,
                 lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
                 owner = "user",
@@ -338,7 +338,7 @@ private fun PreviewFilesList() = FilesList(
                 type = MimeType.DIRECTORY,
             ),
             SshFile(
-                path = SshPath("/home/user/Downloads"),
+                path = "/home/user/Downloads".toPath(),
                 size = 14304,
                 lastModified = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1),
                 owner = "user",
@@ -346,7 +346,7 @@ private fun PreviewFilesList() = FilesList(
                 type = MimeType.DIRECTORY,
             ),
             SshFile(
-                path = SshPath("/home/user/Music"),
+                path = "/home/user/Music".toPath(),
                 size = 3000,
                 lastModified = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(10),
                 owner = "user",
@@ -354,7 +354,7 @@ private fun PreviewFilesList() = FilesList(
                 type = MimeType.DIRECTORY,
             ),
             SshFile(
-                path = SshPath("/home/user/file.txt"),
+                path = "/home/user/file.txt".toPath(),
                 size = 403,
                 lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),
                 owner = "user",
@@ -362,7 +362,7 @@ private fun PreviewFilesList() = FilesList(
                 type = MimeType("text/plain"),
             ),
             SshFile(
-                path = SshPath("/home/user/symlink"),
+                path = "/home/user/symlink".toPath(),
                 size = 403,
                 lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),
                 owner = "user",

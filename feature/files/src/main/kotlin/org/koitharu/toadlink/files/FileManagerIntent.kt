@@ -1,12 +1,12 @@
 package org.koitharu.toadlink.files
 
-import org.koitharu.toadlink.core.fs.SshFile
-import org.koitharu.toadlink.core.fs.SshPath
+import okio.Path
+import org.koitharu.toadlink.files.fs.SshFile
 
 internal sealed interface FileManagerIntent {
 
     data class Navigate(
-        val path: SshPath,
+        val path: Path,
     ) : FileManagerIntent
 
     data object NavigateUp : FileManagerIntent

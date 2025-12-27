@@ -39,7 +39,7 @@ class FindDeviceViewModel @Inject constructor(
             connectionManager.activeConnection.collect { connectedDevice ->
                 state.update {
                     it.copy(
-                        connectedDevice = connectedDevice?.deviceDescriptor?.id ?: 0
+                        connectedDevice = connectedDevice?.host?.id ?: 0
                     )
                 }
             }
@@ -73,7 +73,7 @@ class FindDeviceViewModel @Inject constructor(
             connectionManager.connect(device)
                 .await()
                 .onSuccess {
-                    sendEffect(OpenDevice(it.deviceDescriptor.id))
+                    sendEffect(OpenDevice(it.host.id))
                 }.onFailure {
                     sendEffect(OnError(it))
                 }

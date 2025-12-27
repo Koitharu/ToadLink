@@ -1,7 +1,5 @@
 package org.koitharu.toadlink.mpris
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,7 +14,7 @@ class MPRISClient(
 ) {
 
     val device: DeviceDescriptor
-        get() = connection.deviceDescriptor
+        get() = connection.host
 
     suspend fun isSupported(): Boolean = try {
         connection.execute("playerctl --version").startsWith("v")

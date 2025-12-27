@@ -77,7 +77,7 @@ class ConnectionService : LifecycleService() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        val device = connectionManager.activeConnection.value?.deviceDescriptor
+        val device = connectionManager.activeConnection.value?.host
         if (device == null || device.id != deviceId) {
             stopSelf(startId)
             return START_NOT_STICKY
@@ -91,12 +91,12 @@ class ConnectionService : LifecycleService() {
         )
         lifecycleScope.launch {
             connectionManager.activeConnection.collect { connection ->
-                if (connection == null || connection.deviceDescriptor.id != deviceId) {
+                if (connection == null || connection.host.id != deviceId) {
                     stopSelf(startId)
                 } else if (checkNotificationPermission()) {
                     notificationManager.notify(
                         deviceId,
-                        createServiceNotification(connection.deviceDescriptor)
+                        createServiceNotification(connection.host)
                     )
                 }
             }
@@ -120,7 +120,7 @@ class ConnectionService : LifecycleService() {
         when (intent.action) {
             ACTION_DISCONNECT -> {
                 val deviceId = intent.data?.schemeSpecificPart?.toIntOrNull() ?: return
-                if (connectionManager.activeConnection.value?.deviceDescriptor?.id == deviceId) {
+                if (connectionManager.activeConnection.value?.host?.id == deviceId) {
                     connectionManager.disconnect()
                 }
             }
@@ -130,7 +130,7 @@ class ConnectionService : LifecycleService() {
     @RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     private suspend fun handleMediaSession(connection: SshConnection) {
         val mprisClient = MPRISClient(connection)
-        val notificationId = connection.deviceDescriptor.id
+        val notificationId = connection.host.id
         MediaSessionHelper(this, mprisClient).use { mediaSessionHelper ->
             try {
                 combine(

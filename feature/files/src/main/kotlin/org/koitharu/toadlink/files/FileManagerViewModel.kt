@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
+import okio.Path
 import okio.buffer
 import okio.sink
 import org.koitharu.toadlink.client.SshConnectionManager
-import org.koitharu.toadlink.core.fs.SshFile
-import org.koitharu.toadlink.core.fs.SshPath
 import org.koitharu.toadlink.core.util.firstNotNull
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.files.FileManagerEffect.OnError
@@ -26,6 +26,7 @@ import org.koitharu.toadlink.files.FileManagerIntent.NavigateUp
 import org.koitharu.toadlink.files.FileManagerIntent.OpenFile
 import org.koitharu.toadlink.files.data.LocalFileCache
 import org.koitharu.toadlink.files.data.SshFileManager
+import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 import javax.inject.Inject
 
@@ -75,8 +76,12 @@ internal class FileManagerViewModel @Inject constructor(
             try {
                 val connection = connectionManager.awaitConnection()
                 val target = localFileCache.createTempFile(file.name)
-                target.sink().buffer().use {
-                    connection.getFileContent(file.path.toString(), it)
+                runInterruptible(Dispatchers.IO) {
+                    target.sink().buffer().use { output ->
+                        connection.fileSystem.source(file.path).use { input ->
+                            output.writeAll(input)
+                        }
+                    }
                 }
                 sendEffect(FileManagerEffect.OpenExternal(localFileCache.getFileUri(target)))
             } catch (e: CancellationException) {
@@ -89,7 +94,7 @@ internal class FileManagerViewModel @Inject constructor(
         }
     }
 
-    private fun navigate(path: SshPath) {
+    private fun navigate(path: Path) {
         val prevJob = loadJob
         loadJob = viewModelScope.launch(Dispatchers.Default) {
             prevJob.cancelAndJoin()
@@ -97,7 +102,7 @@ internal class FileManagerViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadDirectory(path: SshPath) {
+    private suspend fun loadDirectory(path: Path) {
         state.update { it.copy(isLoading = true) }
         runCatchingCancellable {
             val fm = fileManager.firstNotNull()

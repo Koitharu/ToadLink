@@ -9,6 +9,7 @@ import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import coil3.request.Options
 import coil3.util.MimeTypeMap
+import okio.Path.Companion.toPath
 import org.koitharu.toadlink.client.SshConnectionManager
 
 class SshImageFetcher internal constructor(
@@ -20,14 +21,10 @@ class SshImageFetcher internal constructor(
     @OptIn(coil3.annotation.InternalCoilApi::class)
     override suspend fun fetch(): FetchResult? {
         val connection = connectionManager.awaitConnection()
-        val content = connection.getFileContent(
-            path = data.path ?: return null,
-        )
         return SourceFetchResult(
             source = ImageSource(
-                source = content,
-                fileSystem = options.fileSystem,
-                metadata = null,
+                file = (data.path ?: return null).toPath(normalize = true),
+                fileSystem = connection.fileSystem,
             ),
             mimeType = MimeTypeMap.getMimeTypeFromUrl(data.toString()),
             dataSource = DataSource.NETWORK,

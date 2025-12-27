@@ -7,6 +7,7 @@ import androidx.lifecycle.flowWithLifecycle
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.request.crossfade
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
@@ -29,6 +30,7 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(
         context: PlatformContext,
     ): ImageLoader = ImageLoader.Builder(applicationContext)
+        .crossfade(true)
         .components {
             add(SshImageFetcher.Factory(connectionManager))
         }.build()
@@ -40,7 +42,7 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
                 .flowWithLifecycle(lifecycle)
                 .collect { connection ->
                     if (connection != null) {
-                        ConnectionService.start(this@ToadApp, connection.deviceDescriptor.id)
+                        ConnectionService.start(this@ToadApp, connection.host.id)
                     }
                 }
         }

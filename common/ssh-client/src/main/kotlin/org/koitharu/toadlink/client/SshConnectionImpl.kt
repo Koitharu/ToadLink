@@ -12,21 +12,21 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
+import okio.FileSystem
+import org.koitharu.toadlink.client.fs.SshFileSystem
 import org.koitharu.toadlink.core.DeviceDescriptor
-import java.io.ByteArrayOutputStream
 import java.io.Closeable
-import java.io.OutputStream
 
 internal class SshConnectionImpl(
-    override val deviceDescriptor: DeviceDescriptor,
-    private val connection: Connection,
+    override val host: DeviceDescriptor,
+    internal val connection: Connection,
 ) : SshConnection, ConnectionMonitor, Closeable {
 
     val isConnected = MutableStateFlow(true)
     private val mutex = Mutex()
+
+    override val fileSystem: FileSystem
+        get() = SshFileSystem(this)
 
     override fun connectionLost(reason: Throwable?) {
         reason?.printStackTrace()
@@ -90,24 +90,6 @@ internal class SshConnectionImpl(
         }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun getFileContent(path: String): BufferedSource {
-        val target = Buffer()
-        getFileContent(path, target)
-        return target
-    }
-
-    override suspend fun getFileContent(
-        path: String,
-        target: BufferedSink,
-    ) {
-        resurrectConnection()
-        runInterruptible(Dispatchers.IO) {
-            val client = connection.createSCPClient()
-            client.get(path, target.outputStream())
-            target.flush()
-        }
-    }
-
     private suspend fun resurrectConnection() {
         if (!isConnected.value) {
             mutex.withLock {
@@ -115,8 +97,8 @@ internal class SshConnectionImpl(
                     runInterruptible(Dispatchers.IO) {
                         connection.connect()
                         connection.authenticateWithPassword(
-                            deviceDescriptor.username,
-                            deviceDescriptor.password
+                            host.username,
+                            host.password
                         )
                         isConnected.value = true
                     }

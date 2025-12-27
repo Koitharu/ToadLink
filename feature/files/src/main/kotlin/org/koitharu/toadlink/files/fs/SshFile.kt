@@ -1,7 +1,9 @@
-package org.koitharu.toadlink.core.fs
+package org.koitharu.toadlink.files.fs
+
+import okio.Path
 
 data class SshFile(
-    val path: SshPath,
+    val path: Path,
     val size: Long,
     val lastModified: Long,
     val owner: String,
@@ -9,9 +11,9 @@ data class SshFile(
     val type: MimeType,
 ) {
 
-    val name: String = path.lastSegment()
+    val name: String = path.segments.last()
 
-    val parentPath: SshPath?
+    val parentPath: Path?
         get() = path.parent
 
     val isSymlink: Boolean

@@ -81,7 +81,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
     fun save() {
         viewModelScope.launch(Dispatchers.Default) {
             state.update { it.copy(isLoading = true) }
-            val device = connectionManager.awaitConnection().deviceDescriptor
+            val device = connectionManager.awaitConnection().host
             runCatchingCancellable {
                 val action = RemoteAction(
                     id = state.value.actionId,

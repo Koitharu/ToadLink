@@ -2,8 +2,13 @@ package org.koitharu.toadlink.client
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.runBlocking
 
 suspend fun SshConnection.tryExecute(cmdline: String) = runCatching {
+    execute(cmdline)
+}
+
+fun SshConnection.executeBlocking(cmdline: String) = runBlocking {
     execute(cmdline)
 }
 

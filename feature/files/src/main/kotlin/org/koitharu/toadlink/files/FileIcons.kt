@@ -1,7 +1,7 @@
 package org.koitharu.toadlink.files
 
 import androidx.annotation.DrawableRes
-import org.koitharu.toadlink.core.fs.SshFile
+import org.koitharu.toadlink.files.fs.SshFile
 
 @DrawableRes
 internal fun fileIcon(file: SshFile) = when {

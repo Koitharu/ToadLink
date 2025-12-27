@@ -6,14 +6,15 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import okio.Path
+import okio.Path.Companion.toPath
 import org.koitharu.toadlink.client.SshConnection
-import org.koitharu.toadlink.core.fs.MimeType
-import org.koitharu.toadlink.core.fs.MimeType.Companion.toMimeTypeOrNull
-import org.koitharu.toadlink.core.fs.SshFile
-import org.koitharu.toadlink.core.fs.SshPath
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.core.util.splitByWhitespace
 import org.koitharu.toadlink.core.util.unescape
+import org.koitharu.toadlink.files.fs.MimeType
+import org.koitharu.toadlink.files.fs.MimeType.Companion.toMimeTypeOrNull
+import org.koitharu.toadlink.files.fs.SshFile
 import java.text.SimpleDateFormat
 import java.util.EnumMap
 import java.util.Locale
@@ -24,23 +25,20 @@ class SshFileManager(
 
     private val dateFormat = SimpleDateFormat("yyyy-mm-dd HH:MM", Locale.ROOT)
 
-    suspend fun resolvePath(path: String): SshPath = runCatchingCancellable {
+    suspend fun resolvePath(path: String): Path = runCatchingCancellable {
         connection.execute("realpath $path")
     }.recoverCatching {
         connection.execute("readlink -f $path")
     }.map {
-        SshPath(it)
+        it.toPath(normalize = false)
     }.getOrThrow()
 
-    suspend fun getUserHome(): SshPath = SshPath(
-        path = connection.execute("xdg-user-dir")
-    )
+    suspend fun getUserHome(): Path = connection.execute("xdg-user-dir").toPath()
 
-    suspend fun getXdgUserDir(dir: XdgUserDir): SshPath = SshPath(
-        path = connection.execute("xdg-user-dir ${dir.name}")
-    )
+    suspend fun getXdgUserDir(dir: XdgUserDir): Path =
+        connection.execute("xdg-user-dir ${dir.name}").toPath()
 
-    suspend fun getXdgUserDirs(): Map<XdgUserDir, SshPath?> = coroutineScope {
+    suspend fun getXdgUserDirs(): Map<XdgUserDir, Path?> = coroutineScope {
         val homeDir = getUserHome()
         XdgUserDir.entries.map { xdgUserDir ->
             async { xdgUserDir to getXdgUserDir(xdgUserDir).takeUnless { it == homeDir } }
@@ -54,7 +52,7 @@ class SshFileManager(
     ).toMimeTypeOrNull() ?: MimeType.UNKNOWN
 
     suspend fun listFiles(
-        path: SshPath,
+        path: Path,
         includeHidden: Boolean,
     ): ImmutableList<SshFile> {
         val command = buildString {
@@ -73,7 +71,7 @@ class SshFileManager(
             }.toPersistentList()
     }
 
-    private fun String.parseFile(parentPath: SshPath): SshFile? {
+    private fun String.parseFile(parentPath: Path): SshFile? {
         val parts = splitByWhitespace()
         if (parts.size < 8) {
             return null

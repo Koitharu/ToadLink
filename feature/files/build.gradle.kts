@@ -53,6 +53,7 @@ dependencies {
     implementation(project(":common:ssh-client"))
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.coil.compose)
 
     implementation(libs.dagger.hilt)
     ksp(libs.dagger.hilt.compiler)

@@ -1,4 +1,4 @@
-package org.koitharu.toadlink.core.fs
+package org.koitharu.toadlink.files.fs
 
 
 @JvmInline

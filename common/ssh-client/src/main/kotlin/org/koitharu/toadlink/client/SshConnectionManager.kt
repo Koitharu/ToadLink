@@ -43,7 +43,7 @@ class SshConnectionManager(
         deviceDescriptor: DeviceDescriptor,
     ): Deferred<Result<SshConnection>> {
         activeConnection.value?.let {
-            if (it.deviceDescriptor == deviceDescriptor) {
+            if (it.host == deviceDescriptor) {
                 return CompletableDeferred(Result.success(it))
             }
         }

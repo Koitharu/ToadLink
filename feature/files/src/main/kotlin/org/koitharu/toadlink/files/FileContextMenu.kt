@@ -2,7 +2,7 @@ package org.koitharu.toadlink.files
 
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.runtime.Composable
-import org.koitharu.toadlink.core.fs.SshFile
+import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 
 @Composable

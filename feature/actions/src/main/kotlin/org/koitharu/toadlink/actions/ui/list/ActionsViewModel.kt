@@ -37,7 +37,7 @@ internal class ActionsViewModel @Inject constructor(
                 if (it == null) {
                     emptyFlow()
                 } else {
-                    val deviceId = it.deviceDescriptor.id
+                    val deviceId = it.host.id
                     repository.observeAll(deviceId)
                 }
             }.combine(executionState) { actions, execution ->
