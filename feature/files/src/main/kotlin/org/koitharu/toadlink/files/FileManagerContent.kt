@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -231,10 +232,21 @@ private fun FileItem(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box {
-                Icon(
-                    painter = painterResource(fileIcon(file)),
-                    contentDescription = null
-                )
+                val fileIcon = fileIcon(file)
+                if (file.isDirectory) {
+                    Icon(
+                        painter = painterResource(fileIcon),
+                        contentDescription = null
+                    )
+                } else {
+                    AsyncImage(
+                        modifier = Modifier.size(24.dp),
+                        model = file.uri,
+                        contentDescription = null,
+                        error = painterResource(fileIcon),
+                        placeholder = painterResource(fileIcon)
+                    )
+                }
             }
             Column(
                 modifier = Modifier

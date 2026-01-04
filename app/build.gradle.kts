@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -39,16 +41,16 @@ android {
     }
     kotlin {
         compilerOptions {
+            jvmTarget = JvmTarget.JVM_11
             optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
+            optIn.add("coil3.annotation.InternalCoilApi")
             optIn.add("androidx.compose.material3.ExperimentalMaterial3Api")
             optIn.add("androidx.compose.material3.ExperimentalMaterial3ExpressiveApi")
         }
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

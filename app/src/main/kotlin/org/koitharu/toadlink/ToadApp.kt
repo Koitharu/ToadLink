@@ -8,11 +8,16 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.request.crossfade
+import coil3.util.DebugLogger
+import coil3.util.Logger
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.service.ConnectionService
+import org.koitharu.toadlink.utils.coil.ImageThumbnailFetcher
 import org.koitharu.toadlink.utils.coil.SshImageFetcher
+import org.koitharu.toadlink.utils.coil.ThumbnailFetcher
+import org.koitharu.toadlink.utils.coil.VideoThumbnailFetcher
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -23,7 +28,7 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
-        SshConnectionManager.setLoggingEnabled(true) // TODO false for release
+        SshConnectionManager.setLoggingEnabled(BuildConfig.DEBUG) // TODO false for release
         observeConnection()
     }
 
@@ -31,7 +36,9 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
         context: PlatformContext,
     ): ImageLoader = ImageLoader.Builder(applicationContext)
         .crossfade(true)
+        .logger(if (BuildConfig.DEBUG) DebugLogger(Logger.Level.Info) else null)
         .components {
+            add(ThumbnailFetcher.Factory(connectionManager))
             add(SshImageFetcher.Factory(connectionManager))
         }.build()
 

@@ -11,6 +11,7 @@ import coil3.request.Options
 import coil3.util.MimeTypeMap
 import okio.Path.Companion.toPath
 import org.koitharu.toadlink.client.SshConnectionManager
+import org.koitharu.toadlink.files.fs.MimeType.Companion.toMimeTypeOrNull
 
 class SshImageFetcher internal constructor(
     private val data: Uri,
@@ -39,14 +40,20 @@ class SshImageFetcher internal constructor(
             data: Uri,
             options: Options,
             imageLoader: ImageLoader,
-        ): Fetcher? = if (data.scheme == "ssh") {
-            SshImageFetcher(
-                data = data,
-                options = options,
-                connectionManager = connectionManager,
-            )
-        } else {
-            null
+        ): Fetcher? {
+            if (data.scheme != "ssh") {
+                return null
+            }
+            val type = MimeTypeMap.getMimeTypeFromUrl(data.toString())?.toMimeTypeOrNull()
+            return if (type != null && type.isImage) {
+                SshImageFetcher(
+                    data = data,
+                    options = options,
+                    connectionManager = connectionManager,
+                )
+            } else {
+                null
+            }
         }
     }
 }

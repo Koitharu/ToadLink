@@ -23,4 +23,7 @@ data class SshFile(
 
     val isDirectory: Boolean
         get() = type == MimeType.DIRECTORY
+
+    val uri: String
+        get() = "ssh:$path"
 }

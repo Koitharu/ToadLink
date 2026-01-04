@@ -13,6 +13,8 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okio.FileSystem
+import okio.Source
+import okio.source
 import org.koitharu.toadlink.client.fs.SshFileSystem
 import org.koitharu.toadlink.core.DeviceDescriptor
 import java.io.Closeable
@@ -47,6 +49,27 @@ internal class SshConnectionImpl(
                 session.waitForCondition(ChannelCondition.EXIT_STATUS, 5_000L)
                 if (session.exitStatus == 0) {
                     session.stdout.bufferedReader().use { it.readText() }.trim()
+                } else {
+                    val errMsg =
+                        session.stderr.bufferedReader().use { it.readText() }.trim()
+                            .ifEmpty { null }
+                    throw RemoteProcessException(
+                        exitCode = session.exitStatus,
+                        message = errMsg,
+                    )
+                }
+            }
+        }
+    }
+
+    override suspend fun executeAsSource(cmdline: String): Source {
+        resurrectConnection()
+        return runInterruptible(Dispatchers.IO) {
+            connection.openSession().use { session ->
+                session.execCommand(cmdline)
+                session.waitForCondition(ChannelCondition.EXIT_STATUS, 5_000L)
+                if (session.exitStatus == 0) {
+                    session.stdout.source()
                 } else {
                     val errMsg =
                         session.stderr.bufferedReader().use { it.readText() }.trim()

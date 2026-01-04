@@ -19,6 +19,9 @@ value class MimeType(private val value: String) {
     val isImage: Boolean
         get() = type == TYPE_IMAGE
 
+    val isVideo: Boolean
+        get() = type == TYPE_VIDEO
+
     companion object {
 
         val DIRECTORY = MimeType("inode/directory")
@@ -31,6 +34,7 @@ value class MimeType(private val value: String) {
         }
 
         private const val TYPE_IMAGE = "image"
+        private const val TYPE_VIDEO = "video"
         private val REGEX_MIME = Regex("^\\w+/([-+.\\w]+|\\*)$", RegexOption.IGNORE_CASE)
     }
 }
