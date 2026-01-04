@@ -97,7 +97,7 @@ private fun PlayerControlMainContent(
             modifier = Modifier.padding(contentPadding),
             metadata = state.metadata,
             state = state.state,
-            isLoading = false,
+            isLoading = state.isLoading,
             handleAction = intentHandler::handleIntent,
         )
 

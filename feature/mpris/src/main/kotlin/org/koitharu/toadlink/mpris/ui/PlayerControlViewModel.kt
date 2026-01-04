@@ -2,15 +2,16 @@ package org.koitharu.toadlink.mpris.ui
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.koitharu.toadlink.client.SshConnectionManager
@@ -27,7 +28,6 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Seek
 import org.koitharu.toadlink.mpris.ui.PlayerControlEffect.OnError
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 internal class PlayerControlViewModel @Inject constructor(
@@ -37,6 +37,7 @@ internal class PlayerControlViewModel @Inject constructor(
 ) {
 
     private var intentJob: Job? = null
+    private val isProcessing = MutableStateFlow(false)
 
     private val client = connectionManager.activeConnection.mapLatest { connection ->
         if (connection == null) {
@@ -70,7 +71,8 @@ internal class PlayerControlViewModel @Inject constructor(
         val prevJob = intentJob
         intentJob = viewModelScope.launch {
             prevJob?.join()
-            runCatchingCancellable {
+            isProcessing.value = true
+            try {
                 when (intent) {
                     Next -> mpris.nextTrack()
                     Pause -> mpris.pause()
@@ -80,9 +82,13 @@ internal class PlayerControlViewModel @Inject constructor(
                     is Rewind -> mpris.fastForward(intent.delta)
                     is Seek -> mpris.setPosition(intent.position)
                 }
-            }.onFailure { error ->
-                error.printStackTrace()
-                sendEffect(OnError(error))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                e.printStackTrace()
+                sendEffect(OnError(e))
+            } finally {
+                isProcessing.value = false
             }
         }
     }
@@ -90,21 +96,22 @@ internal class PlayerControlViewModel @Inject constructor(
     private suspend fun MPRISClient.observeAll() {
         combine(
             observeState(),
-            observeMetadata()
-        ) { state, metadata ->
-            PlayerControlState.Player(
-                state = state,
-                metadata = metadata,
-            )
-        }.timeout(4.seconds)
-            .catch { error ->
-                state.value = PlayerControlState.Error(error)
-            }.collectLatest {
-                state.value = if (it.state == PlayerState.UNKNOWN && it.metadata == null) {
-                    PlayerControlState.NotPlaying
-                } else {
-                    it
-                }
+            observeMetadata(),
+            isProcessing,
+        ) { state, metadata, processing ->
+            if (state == PlayerState.UNKNOWN && metadata == null) {
+                PlayerControlState.NotPlaying
+            } else {
+                PlayerControlState.Player(
+                    state = state,
+                    metadata = metadata,
+                    isLoading = processing,
+                )
             }
+        }.catch { error ->
+            emit(PlayerControlState.Error(error))
+        }.collectLatest { newState ->
+            state.value = newState
+        }
     }
 }

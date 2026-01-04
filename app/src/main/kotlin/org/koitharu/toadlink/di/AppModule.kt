@@ -9,8 +9,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.plus
+import org.koitharu.toadlink.MainActivity
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.network.NetworkScanner
+import org.koitharu.toadlink.ui.nav.AppIntentFactory
 import javax.inject.Singleton
 
 @Module
@@ -30,4 +32,7 @@ class AppModule {
     ) = NetworkScanner(
         wifiManager = wifiManager,
     )
+
+    @Provides
+    fun provideAppIntentFactory(): AppIntentFactory = MainActivity
 }

@@ -1,9 +1,11 @@
 package org.koitharu.toadlink.mpris.ui
 
-import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -150,33 +150,6 @@ private fun PositionSlider(
 }
 
 @Composable
-private fun CoverArt(coverArt: Bitmap?) {
-    Surface(
-        modifier = Modifier
-            .size(260.dp)
-            .padding(bottom = 16.dp)
-            .aspectRatio(1f),
-    ) {
-        AnimatedContent(coverArt?.asImageBitmap()) { cover ->
-            if (cover == null) {
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                )
-            } else {
-                Image(
-                    modifier = Modifier.fillMaxSize(),
-                    bitmap = cover,
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ButtonBar(
     modifier: Modifier = Modifier,
     handleAction: (PlayerControlAction) -> Unit,
@@ -211,19 +184,24 @@ private fun ButtonBar(
             )
         },
     ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                color = LocalContentColor.current,
-                strokeWidth = 3.dp,
-            )
-        } else {
-            when (state) {
+        AnimatedContent(
+            targetState = state.takeUnless { isLoading },
+            transitionSpec = {
+                scaleIn() + fadeIn() togetherWith scaleOut() + fadeOut()
+            }
+        ) { targetState ->
+            when (targetState) {
                 PlayerState.PLAYING -> Icon(painterResource(R.drawable.ic_pause), "pause")
                 PlayerState.PAUSED -> Icon(painterResource(R.drawable.ic_play), "play")
                 PlayerState.UNKNOWN -> Icon(
                     painterResource(R.drawable.ic_play_pause),
                     "play/pause"
+                )
+
+                null -> CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = LocalContentColor.current,
+                    strokeWidth = 3.dp,
                 )
             }
         }

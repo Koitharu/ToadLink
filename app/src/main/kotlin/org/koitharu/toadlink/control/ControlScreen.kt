@@ -28,6 +28,7 @@ import androidx.compose.material3.TooltipDefaults.rememberTooltipPositionProvide
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import org.koitharu.toadlink.actions.ui.list.ActionsContent
+import org.koitharu.toadlink.control.ControlEffect.CloseScreen
 import org.koitharu.toadlink.control.ControlIntent.SwitchSection
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.files.FileManagerContent
@@ -54,6 +56,14 @@ fun ControlScreen(deviceId: Int) {
     }
     val state by viewModel.collectState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val router = LocalRouter.current
+    LaunchedEffect("effect") {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                CloseScreen -> router.changeRoot(FindDeviceDestination)
+            }
+        }
+    }
 
     ControlContent(
         state = state,
@@ -114,22 +124,22 @@ private fun ControlContent(
                 enter = slideInVertically(),
                 exit = slideOutVertically(),
             ) {
-                check(state is ControlState.Connected)
+                val section = (state as? ControlState.Connected)?.section
                 NavigationBar {
                     NavigationItem(
-                        isSelected = state.section == ControlSection.ACTIONS,
+                        isSelected = section == ControlSection.ACTIONS,
                         icon = R.drawable.ic_click,
                         label = stringResource(R.string.actions),
                         onClick = { handleIntent(SwitchSection(ControlSection.ACTIONS)) }
                     )
                     NavigationItem(
-                        isSelected = state.section == ControlSection.MPRIS,
+                        isSelected = section == ControlSection.MPRIS,
                         icon = R.drawable.ic_media,
                         label = stringResource(R.string.media),
                         onClick = { handleIntent(SwitchSection(ControlSection.MPRIS)) }
                     )
                     NavigationItem(
-                        isSelected = state.section == ControlSection.FILES,
+                        isSelected = section == ControlSection.FILES,
                         icon = R.drawable.ic_files,
                         label = stringResource(R.string.files),
                         onClick = { handleIntent(SwitchSection(ControlSection.FILES)) }

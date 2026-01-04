@@ -20,5 +20,6 @@ internal sealed interface PlayerControlState {
     data class Player(
         val state: PlayerState,
         val metadata: PlayerMetadata?,
+        val isLoading: Boolean,
     ) : PlayerControlState
 }

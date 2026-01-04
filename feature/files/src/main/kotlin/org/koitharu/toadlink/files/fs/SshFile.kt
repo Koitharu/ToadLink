@@ -1,6 +1,7 @@
 package org.koitharu.toadlink.files.fs
 
 import okio.Path
+import org.koitharu.toadlink.files.data.XdgUserDir
 
 data class SshFile(
     val path: Path,
@@ -9,6 +10,7 @@ data class SshFile(
     val owner: String,
     val symlinkTarget: String?,
     val type: MimeType,
+    val xdgUserDir: XdgUserDir?,
 ) {
 
     val name: String = path.segments.last()

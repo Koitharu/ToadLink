@@ -9,6 +9,8 @@ import kotlinx.coroutines.coroutineScope
 import okio.Path
 import okio.Path.Companion.toPath
 import org.koitharu.toadlink.client.SshConnection
+import org.koitharu.toadlink.core.util.lazy.getOrNull
+import org.koitharu.toadlink.core.util.lazy.suspendLazy
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.core.util.splitByWhitespace
 import org.koitharu.toadlink.core.util.unescape
@@ -24,6 +26,7 @@ class SshFileManager(
 ) {
 
     private val dateFormat = SimpleDateFormat("yyyy-mm-dd HH:MM", Locale.ROOT)
+    private val xdgUserDirs = suspendLazy(initializer = ::getXdgUserDirsReversed)
 
     suspend fun resolvePath(path: String): Path = runCatchingCancellable {
         connection.execute("realpath $path")
@@ -64,23 +67,25 @@ class SshFileManager(
             append(path)
             append('"')
         }
+        val userDirs = xdgUserDirs.getOrNull().orEmpty()
         return connection.execute(command)
             .lines()
             .mapNotNull { line ->
-                line.parseFile(path)
+                line.parseFile(path, userDirs)
             }.toPersistentList()
     }
 
-    private fun String.parseFile(parentPath: Path): SshFile? {
+    private fun String.parseFile(parentPath: Path, userDirs: Map<Path, XdgUserDir>): SshFile? {
         val parts = splitByWhitespace()
         if (parts.size < 8) {
             return null
         }
         val dateString = parts[5] + " " + parts[6]
         val name = parts[7].unquote().unescape()
+        val path = parentPath.resolve(name)
         val isDirectory = parts[0].firstOrNull() == 'd'
         return SshFile(
-            path = parentPath.resolve(name),
+            path = path,
             size = parts[4].toLong(),
             lastModified = dateFormat.parse(dateString)?.time ?: 0L,
             owner = parts[2],
@@ -93,7 +98,8 @@ class SshFileManager(
                 MimeType.DIRECTORY
             } else {
                 getMimeType(name) ?: MimeType.UNKNOWN
-            }
+            },
+            xdgUserDir = userDirs[path]
         )
     }
 
@@ -109,4 +115,14 @@ class SshFileManager(
         .removeSuffix(".tmp")
         .substringAfterLast('.', "")
         .takeIf { it.length in 1..5 }
+
+    private suspend fun getXdgUserDirsReversed(): Map<Path, XdgUserDir> = coroutineScope {
+        val homeDir = getUserHome()
+        XdgUserDir.entries.map { xdgUserDir ->
+            async {
+                val path = getXdgUserDir(xdgUserDir).takeUnless { it == homeDir }
+                path?.let { it to xdgUserDir }
+            }
+        }.awaitAll().filterNotNull().toMap()
+    }
 }

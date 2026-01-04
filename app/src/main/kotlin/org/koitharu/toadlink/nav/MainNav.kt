@@ -3,6 +3,7 @@ package org.koitharu.toadlink.nav
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -15,8 +16,8 @@ import org.koitharu.toadlink.finddevice.FindDeviceScreen
 import org.koitharu.toadlink.ui.nav.LocalRouter
 
 @Composable
-fun MainNav() {
-    val backStack = rememberNavBackStack(FindDeviceDestination)
+fun MainNav(initialNavKey: NavKey?) {
+    val backStack = rememberNavBackStack(initialNavKey ?: FindDeviceDestination)
     CompositionLocalProvider(LocalRouter provides RouterImpl(backStack)) {
         NavDisplay(
             backStack = backStack,

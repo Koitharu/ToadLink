@@ -5,9 +5,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import org.koitharu.toadlink.client.RemoteProcessException
 import org.koitharu.toadlink.client.SshConnection
 import org.koitharu.toadlink.core.DeviceDescriptor
+import kotlin.math.absoluteValue
 
 class MPRISClient(
     private val connection: SshConnection,
@@ -40,13 +42,14 @@ class MPRISClient(
 
     suspend fun fastForward(seconds: Int = 10) {
         if (seconds < 0) {
-            rewind(seconds)
+            rewind(seconds.absoluteValue)
         } else {
             connection.execute("playerctl position +$seconds")
         }
     }
 
     suspend fun rewind(seconds: Int = 10) {
+        require(seconds > 0) { "Cannot rewind be $seconds seconds" }
         connection.execute("playerctl position -$seconds")
     }
 
@@ -75,6 +78,7 @@ class MPRISClient(
     fun observeState(): Flow<PlayerState> {
         return connection.executeContinuously("playerctl status -F")
             .map { x -> parseState(x) }
+            .onStart { emit(PlayerState.UNKNOWN) }
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
     }
@@ -82,6 +86,7 @@ class MPRISClient(
     fun observeMetadata(): Flow<PlayerMetadata?> {
         return connection.executeContinuously("playerctl metadata -f ${PlayerMetadata.FORMAT} -F")
             .map { line -> PlayerMetadata.tryParse(line) }
+            .onStart { emit(null) }
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
     }

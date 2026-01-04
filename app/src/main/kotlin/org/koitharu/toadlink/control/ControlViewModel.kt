@@ -6,6 +6,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
@@ -30,7 +31,7 @@ class ControlViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            runCatchingCancellable {
+            val device = runCatchingCancellable {
                 val device = devicesRepository.get(deviceId)
                 connectionManager.connect(device).await().getOrThrow()
                 device
@@ -38,7 +39,9 @@ class ControlViewModel @AssistedInject constructor(
                 state.value = Connected(device, ControlSection.ACTIONS)
             }.onFailure { error ->
                 state.value = ControlState.Error(null, error)
-            }
+            }.getOrNull() ?: return@launch
+            connectionManager.activeConnection.first { it == null }
+            sendEffect(ControlEffect.CloseScreen)
         }
     }
 

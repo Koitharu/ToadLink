@@ -2,6 +2,7 @@ package org.koitharu.toadlink.service
 
 import android.annotation.SuppressLint
 import android.app.Notification
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -22,16 +23,18 @@ import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import org.koitharu.toadlink.MainActivity
 import org.koitharu.toadlink.client.SshConnection
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.mpris.MPRISClient
 import org.koitharu.toadlink.mpris.MediaSessionHelper
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.nav.AppIntentFactory
 import org.koitharu.toadlink.ui.util.checkNotificationPermission
 import javax.inject.Inject
 
@@ -44,7 +47,11 @@ class ConnectionService : LifecycleService() {
     @Inject
     lateinit var notificationManager: NotificationManagerCompat
 
+    @Inject
+    lateinit var intentFactory: AppIntentFactory
+
     private lateinit var broadcastReceiver: BroadcastReceiver
+    private var mediaListenerJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -59,8 +66,8 @@ class ConnectionService : LifecycleService() {
                 }
             }
         }
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(ACTION_DISCONNECT)
+        val intentFilter = IntentFilter(ACTION_DISCONNECT)
+        intentFilter.addDataScheme("conn")
         ContextCompat.registerReceiver(
             this,
             broadcastReceiver,
@@ -101,7 +108,8 @@ class ConnectionService : LifecycleService() {
                 }
             }
         }
-        lifecycleScope.launch {
+        mediaListenerJob?.cancel()
+        mediaListenerJob = lifecycleScope.launch {
             connectionManager.activeConnection.collectLatest { connection ->
                 if (connection != null) {
                     handleMediaSession(connection)
@@ -146,6 +154,11 @@ class ConnectionService : LifecycleService() {
                         notificationManager.cancel(TAG_MEDIA, notificationId)
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // TODO
             } finally {
                 notificationManager.cancel(TAG_MEDIA, notificationId)
             }
@@ -162,16 +175,22 @@ class ConnectionService : LifecycleService() {
             PendingIntentCompat.getActivity(
                 this,
                 0,
-                MainActivity.IntentBuilder(this).build(),
+                intentFactory.controlIntent(this, device.id),
                 0,
                 false
             )
         )
         val disconnectIntent = Intent(ACTION_DISCONNECT)
-            .setData("conn://${device.id}".toUri())
+            .setData("conn:${device.id}".toUri())
         val action = NotificationCompat.Action(
             null, getString(R.string.disconnect),
-            PendingIntentCompat.getBroadcast(this, 0, disconnectIntent, 0, false)
+            PendingIntentCompat.getBroadcast(
+                this,
+                0,
+                disconnectIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT,
+                false
+            )
         )
         builder.addAction(action)
         return builder.build()

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 abstract class MviViewModel<S, I, E>(
@@ -13,10 +14,12 @@ abstract class MviViewModel<S, I, E>(
 ) : ViewModel(), MviIntentHandler<I> {
 
     protected val state = MutableStateFlow<S>(initialState)
-    val effect = MutableSharedFlow<E>(extraBufferCapacity = 1)
+
+    private val mutableEffect = MutableSharedFlow<E>(extraBufferCapacity = 1)
+    val effect get() = mutableEffect.asSharedFlow()
 
     protected suspend fun sendEffect(e: E) {
-        effect.emit(e)
+        mutableEffect.emit(e)
     }
 
     protected fun sendEffectAsync(e: E) = viewModelScope.launch {

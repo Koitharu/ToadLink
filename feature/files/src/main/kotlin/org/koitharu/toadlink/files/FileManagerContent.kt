@@ -46,6 +46,7 @@ import org.koitharu.toadlink.files.FileManagerEffect.OnError
 import org.koitharu.toadlink.files.FileManagerEffect.OpenExternal
 import org.koitharu.toadlink.files.FileManagerIntent.CancelFileTransfer
 import org.koitharu.toadlink.files.FileManagerIntent.NavigateUp
+import org.koitharu.toadlink.files.data.XdgUserDir
 import org.koitharu.toadlink.files.fs.MimeType
 import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.files.utils.formatFileSize
@@ -336,6 +337,7 @@ private fun PreviewFilesList() = FilesList(
                 owner = "user",
                 symlinkTarget = null,
                 type = MimeType.DIRECTORY,
+                xdgUserDir = XdgUserDir.DOCUMENTS,
             ),
             SshFile(
                 path = "/home/user/Downloads".toPath(),
@@ -344,6 +346,7 @@ private fun PreviewFilesList() = FilesList(
                 owner = "user",
                 symlinkTarget = null,
                 type = MimeType.DIRECTORY,
+                xdgUserDir = XdgUserDir.DOWNLOAD,
             ),
             SshFile(
                 path = "/home/user/Music".toPath(),
@@ -352,6 +355,7 @@ private fun PreviewFilesList() = FilesList(
                 owner = "user",
                 symlinkTarget = null,
                 type = MimeType.DIRECTORY,
+                xdgUserDir = XdgUserDir.MUSIC,
             ),
             SshFile(
                 path = "/home/user/file.txt".toPath(),
@@ -360,6 +364,7 @@ private fun PreviewFilesList() = FilesList(
                 owner = "user",
                 symlinkTarget = null,
                 type = MimeType("text/plain"),
+                xdgUserDir = null,
             ),
             SshFile(
                 path = "/home/user/symlink".toPath(),
@@ -368,6 +373,7 @@ private fun PreviewFilesList() = FilesList(
                 owner = "user",
                 symlinkTarget = "/var/log/log.txt",
                 type = MimeType.UNKNOWN,
+                xdgUserDir = null,
             ),
         ),
         isLoading = true,
