@@ -1,6 +1,7 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.dagger.hilt)
@@ -29,18 +30,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
         compilerOptions {
+            languageVersion = KotlinVersion.KOTLIN_2_3
             optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
             optIn.add("androidx.compose.material3.ExperimentalMaterial3Api")
             optIn.add("androidx.compose.material3.ExperimentalMaterial3ExpressiveApi")
         }
-    }
-    kotlinOptions {
-        jvmTarget = "11"
     }
     buildFeatures {
         compose = true

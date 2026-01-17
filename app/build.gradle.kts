@@ -1,8 +1,7 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.kotlin.parcelize)
@@ -36,12 +35,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
         compilerOptions {
-            jvmTarget = JvmTarget.JVM_11
+            languageVersion = KotlinVersion.KOTLIN_2_3
             optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
             optIn.add("coil3.annotation.InternalCoilApi")
             optIn.add("androidx.compose.material3.ExperimentalMaterial3Api")
