@@ -43,8 +43,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import org.koitharu.toadlink.core.DeviceDescriptor
+import org.koitharu.toadlink.core.NetworkDevice
+import org.koitharu.toadlink.editor.AddDeviceDestination
 import org.koitharu.toadlink.finddevice.FindDeviceEffect.OnError
-import org.koitharu.toadlink.nav.AddDeviceDestination
 import org.koitharu.toadlink.nav.ControlDestination
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.DotIndicator
@@ -145,7 +146,7 @@ private fun FindDeviceContent(
                     }
                     items(
                         items = state.availableDevices,
-                        key = { it },
+                        key = { it.address },
                     ) {
                         DeviceItem(it)
                     }
@@ -182,7 +183,7 @@ private fun AddDeviceButton() {
             )
             Text(
                 modifier = Modifier.padding(start = 16.dp),
-                text = "Add device manually",
+                text = stringResource(R.string.add_device_manually),
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -191,7 +192,7 @@ private fun AddDeviceButton() {
 
 @Composable
 private fun DeviceItem(
-    device: String,
+    device: NetworkDevice,
 ) {
     val router = LocalRouter.current
     Surface(
@@ -199,7 +200,7 @@ private fun DeviceItem(
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
         onClick = {
-            router.navigate(AddDeviceDestination(device))
+            router.navigate(AddDeviceDestination(device.address))
         }
     ) {
         Row(
@@ -213,11 +214,24 @@ private fun DeviceItem(
                 painter = painterResource(R.drawable.ic_pc),
                 contentDescription = null
             )
-            Text(
-                modifier = Modifier.padding(start = 16.dp),
-                text = device,
-                style = MaterialTheme.typography.titleMedium
-            )
+            Column(
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .weight(1f)
+            ) {
+                Text(
+                    text = device.address,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                device.description?.let {
+                    Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
@@ -255,13 +269,15 @@ private fun DeviceItem(
                 if (isConnected) {
                     DotIndicator(
                         modifier = Modifier
+                            .size(12.dp)
                             .align(Alignment.BottomEnd),
                         color = colorResource(R.color.toad)
                     )
                 }
             }
             Column(
-                modifier = Modifier.padding(start = 16.dp)
+                modifier = Modifier
+                    .padding(start = 16.dp)
                     .weight(1f)
             ) {
                 Text(
@@ -305,7 +321,7 @@ private fun DeviceContextMenu(
     expanded = isExpanded,
     onDismissRequest = onDismissRequest,
 ) {
-    val router = LocalRouter.current
+    LocalRouter.current
     DropdownMenuItem(
         text = { Text(stringResource(R.string.edit)) },
         onClick = {
@@ -343,8 +359,8 @@ private fun FindDevicePreview() {
                 )
             ),
             availableDevices = persistentListOf(
-                "192.168.0.23",
-                "192.168.0.117"
+                NetworkDevice("192.168.0.23", null),
+                NetworkDevice("192.168.0.117", "PC1"),
             ),
             isScanning = true,
             connectedDevice = 2,

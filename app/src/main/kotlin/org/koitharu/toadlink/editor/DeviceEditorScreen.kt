@@ -1,4 +1,4 @@
-package org.koitharu.toadlink.adddevice
+package org.koitharu.toadlink.editor
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MediumTopAppBar
@@ -41,32 +40,32 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateHostname
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePassword
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePort
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateUsername
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateHostname
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePassword
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePort
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateUsername
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.util.plus
 
 @Composable
 fun AddDeviceScreen(
+    deviceId: Int,
     initialAddress: String?,
 ) {
-    val viewModel = hiltViewModel<AddDeviceViewModel, AddDeviceViewModel.Factory> {
-        it.create(initialAddress)
+    val viewModel = hiltViewModel<DeviceEditorViewModel, DeviceEditorViewModel.Factory> {
+        it.create(deviceId, initialAddress)
     }
     AddDeviceContent(
         state = viewModel.collectState().value,
-        handleIntent = viewModel::handleIntent
+        handleIntent = viewModel::handleIntent,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddDeviceContent(
-    state: AddDeviceState,
-    handleIntent: (AddDeviceIntent) -> Unit,
+    state: DeviceEditorState,
+    handleIntent: (DeviceEditorIntent) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -75,7 +74,13 @@ private fun AddDeviceContent(
             MediumTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.add_device),
+                        text = stringResource(
+                            if (state.isNewDevice) {
+                                R.string.add_device
+                            } else {
+                                R.string.edit_device
+                            }
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -188,7 +193,7 @@ private fun AddDeviceContent(
 
 @Composable
 private fun BottomButtonsBar(
-    handleIntent: (AddDeviceIntent) -> Unit,
+    handleIntent: (DeviceEditorIntent) -> Unit,
 ) = BottomAppBar {
     val router = LocalRouter.current
     OutlinedButton(
@@ -203,7 +208,7 @@ private fun BottomButtonsBar(
     Button(
         modifier = Modifier.weight(1f),
         onClick = {
-            handleIntent(AddDeviceIntent.SaveDevice)
+            handleIntent(DeviceEditorIntent.SaveDevice)
         }
     ) {
         Text(stringResource(R.string.done))
@@ -213,7 +218,7 @@ private fun BottomButtonsBar(
 @Preview
 @Composable
 private fun AddDeviceContentPreview() = AddDeviceContent(
-    state = AddDeviceState(null).copy(
+    state = DeviceEditorState(null, isNewDevice = true).copy(
         username = "test",
         usernameError = R.string.error_generic
     ),

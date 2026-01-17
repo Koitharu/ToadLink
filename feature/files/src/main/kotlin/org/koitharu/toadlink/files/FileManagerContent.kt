@@ -297,7 +297,7 @@ private fun FileSummary(
                     .alignByBaseline(),
                 painter = painterResource(featureR.drawable.ic_arrow_link),
                 contentDescription = null,
-                tint = colorResource(R.color.teal_700),
+                tint = colorResource(R.color.toad),
             )
             Text(
                 modifier = Modifier
@@ -305,7 +305,7 @@ private fun FileSummary(
                     .alignByBaseline(),
                 text = file.symlinkTarget.orEmpty(),
                 style = MaterialTheme.typography.bodySmall,
-                color = colorResource(R.color.teal_700),
+                color = colorResource(R.color.toad),
             )
         }
     }

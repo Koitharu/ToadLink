@@ -10,8 +10,10 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorDestination
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorScreen
-import org.koitharu.toadlink.adddevice.AddDeviceScreen
 import org.koitharu.toadlink.control.ControlScreen
+import org.koitharu.toadlink.editor.AddDeviceDestination
+import org.koitharu.toadlink.editor.AddDeviceScreen
+import org.koitharu.toadlink.editor.EditDeviceDestination
 import org.koitharu.toadlink.finddevice.FindDeviceScreen
 import org.koitharu.toadlink.ui.nav.LocalRouter
 
@@ -31,7 +33,10 @@ fun MainNav(initialNavKey: NavKey?) {
                     ControlScreen(it.deviceId)
                 }
                 entry<AddDeviceDestination> {
-                    AddDeviceScreen(it.initialAddress)
+                    AddDeviceScreen(0, it.initialAddress)
+                }
+                entry<EditDeviceDestination> {
+                    AddDeviceScreen(it.deviceId, null)
                 }
                 entry<FindDeviceDestination> {
                     FindDeviceScreen()

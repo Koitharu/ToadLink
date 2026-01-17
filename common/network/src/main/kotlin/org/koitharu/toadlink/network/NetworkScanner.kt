@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import org.koitharu.toadlink.core.IpAddress
+import org.koitharu.toadlink.core.NetworkDevice
+import org.koitharu.toadlink.core.util.runCatchingCancellable
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.TimeUnit
@@ -19,7 +22,7 @@ class NetworkScanner(
     private val wifiManager: WifiManager,
 ) {
 
-    fun observeLocalNetwork(): Flow<ImmutableList<String>> = channelFlow<IpAddress> {
+    fun observeLocalNetwork(): Flow<ImmutableList<NetworkDevice>> = channelFlow {
         val localIp = IpAddress.parse(getLocalIpAddress() ?: return@channelFlow) as IpAddress.IPv4
         val (net, subnet) = localIp
         if (net != 192.toUByte() || subnet != 168.toUByte()) {
@@ -29,12 +32,12 @@ class NetworkScanner(
             val ip = localIp.copy(b4 = i.toUByte())
             launch {
                 if (probePort(ip.toString(), 22)) {
-                    send(ip)
+                    send(getDeviceInfo(ip))
                 }
             }
         }
-    }.runningFold(persistentListOf()) { list, ipAddress ->
-        list.add(ipAddress.toString())
+    }.runningFold(persistentListOf()) { list, device ->
+        list.add(device)
     }
 
     private fun getLocalIpAddress(): String? {
@@ -49,5 +52,18 @@ class NetworkScanner(
                 socket.connect(InetSocketAddress(ip, port), TimeUnit.SECONDS.toMillis(4).toInt())
             }
         }.isSuccess
+    }
+
+    private suspend fun getDeviceInfo(address: IpAddress): NetworkDevice {
+        val name = runCatchingCancellable {
+            runInterruptible(Dispatchers.IO) {
+                val addr = InetAddress.getByName(address.toString())
+                addr.canonicalHostName
+            }
+        }.getOrNull()
+        return NetworkDevice(
+            address = address.toString(),
+            description = name,
+        )
     }
 }

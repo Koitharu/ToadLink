@@ -2,6 +2,7 @@ package org.koitharu.toadlink.finddevice
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onCompletion
@@ -9,10 +10,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
-import org.koitharu.toadlink.core.DeviceDescriptor
-import org.koitharu.toadlink.finddevice.FindDeviceEffect.OnError
-import org.koitharu.toadlink.finddevice.FindDeviceEffect.OpenDevice
-import org.koitharu.toadlink.finddevice.FindDeviceIntent.Connect
 import org.koitharu.toadlink.finddevice.FindDeviceIntent.Refresh
 import org.koitharu.toadlink.network.NetworkScanner
 import org.koitharu.toadlink.storage.DevicesRepository
@@ -48,7 +45,6 @@ class FindDeviceViewModel @Inject constructor(
 
     override fun handleIntent(intent: FindDeviceIntent) {
         when (intent) {
-            is Connect -> connect(intent.device)
             Refresh -> {
                 if (!networkScanningJob.isActive) {
                     networkScanningJob = scanLocalNetwork()
@@ -57,26 +53,18 @@ class FindDeviceViewModel @Inject constructor(
         }
     }
 
-    private fun scanLocalNetwork() = viewModelScope.launch {
+    private fun scanLocalNetwork() = viewModelScope.launch(Dispatchers.Default) {
         networkScanner.observeLocalNetwork()
             .onStart { state.update { it.copy(isScanning = true) } }
             .onCompletion { state.update { it.copy(isScanning = false) } }
             .collect { availableDevices ->
                 state.update {
-                    it.copy(availableDevices = availableDevices)
+                    it.copy(
+                        availableDevices = availableDevices.filter { dev ->
+                            it.savedDevices.none { x -> x.hostname == dev.address }
+                        }.toPersistentList()
+                    )
                 }
             }
-    }
-
-    private fun connect(device: DeviceDescriptor) {
-        viewModelScope.launch {
-            connectionManager.connect(device)
-                .await()
-                .onSuccess {
-                    sendEffect(OpenDevice(it.host.id))
-                }.onFailure {
-                    sendEffect(OnError(it))
-                }
-        }
     }
 }

@@ -14,8 +14,3 @@ data object FindDeviceDestination : NavKey, Parcelable
 data class ControlDestination(
     val deviceId: Int,
 ) : NavKey, Parcelable
-
-@Serializable
-data class AddDeviceDestination(
-    val initialAddress: String?,
-) : NavKey

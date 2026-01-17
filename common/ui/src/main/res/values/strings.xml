@@ -4,6 +4,7 @@
     <string name="active_connection">Active connection</string>
     <string name="add_action">Add action</string>
     <string name="add_device">Add device</string>
+    <string name="add_device_manually">Add device manually</string>
     <string name="app_name">ToadLink</string>
     <string name="available_devices_">Available devices:</string>
     <string name="close">Close</string>
@@ -15,6 +16,7 @@
     <string name="done">Done</string>
     <string name="edit">Edit</string>
     <string name="edit_action">Edit action</string>
+    <string name="edit_device">Edit device</string>
     <string name="empty_directory_message">This directory is empty</string>
     <string name="error_generic">Something went wrong</string>
     <string name="execute">Execute</string>

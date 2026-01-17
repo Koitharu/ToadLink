@@ -1,8 +1,10 @@
-package org.koitharu.toadlink.adddevice
+package org.koitharu.toadlink.editor
 
 import androidx.annotation.StringRes
+import org.koitharu.toadlink.core.DeviceDescriptor
 
-data class AddDeviceState(
+data class DeviceEditorState(
+    val isNewDevice: Boolean,
     val isLoading: Boolean,
     val hostname: String,
     @field:StringRes
@@ -16,8 +18,21 @@ data class AddDeviceState(
     val password: String,
 ) {
 
-    constructor(initialAddress: String?) : this(
+    constructor(device: DeviceDescriptor) : this(
+        isNewDevice = false,
         isLoading = false,
+        hostname = device.hostname,
+        port = device.port,
+        username = device.username,
+        password = device.password,
+        hostnameError = 0,
+        portError = 0,
+        usernameError = 0,
+    )
+
+    constructor(initialAddress: String?, isNewDevice: Boolean) : this(
+        isNewDevice = isNewDevice,
+        isLoading = !isNewDevice,
         hostname = initialAddress?.substringBeforeLast(':').orEmpty(),
         port = initialAddress?.substringAfterLast(':', "")?.toIntOrNull() ?: 22,
         username = "",

@@ -1,4 +1,4 @@
-package org.koitharu.toadlink.adddevice
+package org.koitharu.toadlink.editor
 
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -9,25 +9,44 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.SaveDevice
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateHostname
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePassword
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdatePort
-import org.koitharu.toadlink.adddevice.AddDeviceIntent.UpdateUsername
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.DeviceDescriptor
+import org.koitharu.toadlink.core.util.runCatchingCancellable
+import org.koitharu.toadlink.editor.DeviceEditorIntent.SaveDevice
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateHostname
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePassword
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePort
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateUsername
 import org.koitharu.toadlink.storage.DevicesRepository
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 
-@HiltViewModel(assistedFactory = AddDeviceViewModel.Factory::class)
-class AddDeviceViewModel @AssistedInject constructor(
+@HiltViewModel(assistedFactory = DeviceEditorViewModel.Factory::class)
+class DeviceEditorViewModel @AssistedInject constructor(
+    @Assisted deviceId: Int,
     @Assisted initialAddress: String?,
     private val connectionManager: SshConnectionManager,
     private val storage: DevicesRepository,
-) : MviViewModel<AddDeviceState, AddDeviceIntent, AddDeviceEffect>(AddDeviceState(initialAddress)) {
+) : MviViewModel<DeviceEditorState, DeviceEditorIntent, DeviceEditorEffect>(
+    DeviceEditorState(initialAddress, deviceId == 0)
+) {
 
-    override fun handleIntent(intent: AddDeviceIntent) = when (intent) {
+    init {
+        if (deviceId != 0) {
+            viewModelScope.launch(Dispatchers.Default) {
+                val device = runCatchingCancellable {
+                    storage.get(deviceId)
+                }.getOrNull()
+                if (device == null) {
+                    // TODO
+                } else {
+                    state.value = DeviceEditorState(device)
+                }
+            }
+        }
+    }
+
+    override fun handleIntent(intent: DeviceEditorIntent) = when (intent) {
         is UpdateHostname -> state.update {
             it.copy(hostname = intent.value)
         }
@@ -71,7 +90,7 @@ class AddDeviceViewModel @AssistedInject constructor(
         }
     }
 
-    private fun AddDeviceState.validate() = copy(
+    private fun DeviceEditorState.validate() = copy(
         portError = when {
             port !in 1..65535 -> R.string.error_generic
             else -> 0
@@ -81,6 +100,9 @@ class AddDeviceViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
 
-        fun create(initialAddress: String?): AddDeviceViewModel
+        fun create(
+            deviceId: Int,
+            initialAddress: String?,
+        ): DeviceEditorViewModel
     }
 }
