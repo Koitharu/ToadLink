@@ -5,7 +5,7 @@ import coil3.request.Options
 import coil3.size.pxOrElse
 import org.koitharu.toadlink.client.SshConnectionManager
 
-class VideoThumbnailFetcher internal constructor(
+class FfmpegVideoThumbnailFetcher internal constructor(
     data: Uri, options: Options, connectionManager: SshConnectionManager,
 ) : ThumbnailFetcher(data, options, connectionManager) {
 

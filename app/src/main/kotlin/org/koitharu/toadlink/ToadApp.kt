@@ -14,10 +14,8 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.service.ConnectionService
-import org.koitharu.toadlink.utils.coil.ImageThumbnailFetcher
 import org.koitharu.toadlink.utils.coil.SshImageFetcher
 import org.koitharu.toadlink.utils.coil.ThumbnailFetcher
-import org.koitharu.toadlink.utils.coil.VideoThumbnailFetcher
 import javax.inject.Inject
 
 @HiltAndroidApp

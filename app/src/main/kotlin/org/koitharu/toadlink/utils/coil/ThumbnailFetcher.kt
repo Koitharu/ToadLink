@@ -47,7 +47,7 @@ sealed class ThumbnailFetcher(
             data: Uri,
             options: Options,
             imageLoader: ImageLoader,
-        ): ThumbnailFetcher? {
+        ): Fetcher? {
             if (!data.isSsh() || !options.size.isThumbnail()) {
                 return null
             }
@@ -60,10 +60,17 @@ sealed class ThumbnailFetcher(
                     connectionManager = connectionManager,
                 )
 
-                mimeType.isVideo -> VideoThumbnailFetcher(
-                    data = data,
-                    options = options,
-                    connectionManager = connectionManager,
+                mimeType.isVideo -> CompositeFetcher(
+                    GstVideoThumbnailFetcher(
+                        data = data,
+                        options = options,
+                        connectionManager = connectionManager,
+                    ),
+                    FfmpegVideoThumbnailFetcher(
+                        data = data,
+                        options = options,
+                        connectionManager = connectionManager,
+                    )
                 )
 
                 mimeType.subtype == "pdf" -> PdfThumbnailFetcher(
