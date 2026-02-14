@@ -63,6 +63,7 @@ dependencies {
     implementation(project(":feature:actions"))
     implementation(project(":feature:mpris"))
     implementation(project(":feature:files"))
+    implementation(project(":feature:settings"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)

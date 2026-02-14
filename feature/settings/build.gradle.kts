@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "org.koitharu.toadlink.files"
+    namespace = "org.koitharu.toadlink.settings"
     compileSdk {
         version = release(36)
     }
@@ -49,15 +49,9 @@ android {
 dependencies {
     implementation(project(":common:core"))
     implementation(project(":common:ui"))
-    implementation(project(":common:ssh-client"))
     implementation(project(":common:settings"))
-
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.coil.compose)
 
     implementation(libs.dagger.hilt)
     ksp(libs.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.viewmodel.compose)
-
-    implementation(libs.okio)
 }

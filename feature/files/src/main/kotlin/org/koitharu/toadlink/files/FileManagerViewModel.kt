@@ -27,6 +27,7 @@ import org.koitharu.toadlink.files.FileManagerIntent.OpenFile
 import org.koitharu.toadlink.files.data.LocalFileCache
 import org.koitharu.toadlink.files.data.SshFileManager
 import org.koitharu.toadlink.files.fs.SshFile
+import org.koitharu.toadlink.settings.AppSettings
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 import javax.inject.Inject
 
@@ -34,6 +35,7 @@ import javax.inject.Inject
 internal class FileManagerViewModel @Inject constructor(
     private val connectionManager: SshConnectionManager,
     private val localFileCache: LocalFileCache,
+    private val settings: AppSettings,
 ) : MviViewModel<FileManagerState, FileManagerIntent, FileManagerEffect>(
     FileManagerState()
 ) {
@@ -49,6 +51,10 @@ internal class FileManagerViewModel @Inject constructor(
         loadDirectory(home)
     }
     private var transferJob: Job? = null
+
+    init {
+        observeSettings()
+    }
 
     override fun handleIntent(intent: FileManagerIntent) = when (intent) {
         is Navigate -> navigate(intent.path)
@@ -125,6 +131,19 @@ internal class FileManagerViewModel @Inject constructor(
         }.onFailure { error ->
             sendEffect(OnError(error))
             state.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun observeSettings() {
+        viewModelScope.launch(Dispatchers.Default) {
+            settings.showThumbnails.collect { value ->
+                state.update { it.copy(showThumbnails = value) }
+            }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            settings.filesGridView.collect { value ->
+                state.update { it.copy(gridView = value) }
+            }
         }
     }
 }

@@ -21,11 +21,15 @@ dependencyResolutionManagement {
 
 rootProject.name = "ToadLink"
 include(":app")
+
 include(":common:ssh-client")
 include(":common:network")
 include(":common:core")
 include(":common:storage")
+include(":common:settings")
 include(":common:ui")
+
 include(":feature:mpris")
 include(":feature:actions")
 include(":feature:files")
+include(":feature:settings")

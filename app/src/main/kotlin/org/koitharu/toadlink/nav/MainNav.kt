@@ -15,6 +15,8 @@ import org.koitharu.toadlink.editor.AddDeviceDestination
 import org.koitharu.toadlink.editor.AddDeviceScreen
 import org.koitharu.toadlink.editor.EditDeviceDestination
 import org.koitharu.toadlink.finddevice.FindDeviceScreen
+import org.koitharu.toadlink.settings.SettingsDestination
+import org.koitharu.toadlink.settings.SettingsScreen
 import org.koitharu.toadlink.ui.nav.LocalRouter
 
 @Composable
@@ -43,6 +45,9 @@ fun MainNav(initialNavKey: NavKey?) {
                 }
                 entry<ActionEditorDestination> {
                     ActionEditorScreen(it.action)
+                }
+                entry<SettingsDestination> {
+                    SettingsScreen()
                 }
             }
         )

@@ -98,6 +98,9 @@ private fun FindDeviceContent(
                     )
                 },
                 scrollBehavior = scrollBehavior,
+                actions = {
+                    FindDeviceMenu(handleIntent)
+                }
             )
         },
         snackbarHost = {

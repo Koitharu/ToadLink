@@ -18,7 +18,7 @@ import org.koitharu.toadlink.ui.nav.LocalRouter
 fun BackNavigationIcon() = TooltipBox(
     positionProvider =
         TooltipDefaults.rememberTooltipPositionProvider(
-            TooltipAnchorPosition.Above
+            TooltipAnchorPosition.Below
         ),
     tooltip = { PlainTooltip { Text(stringResource(R.string.back)) } },
     state = rememberTooltipState(),
