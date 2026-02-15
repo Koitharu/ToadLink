@@ -89,7 +89,7 @@ internal class FileManagerViewModel @Inject constructor(
                         }
                     }
                 }
-                sendEffect(FileManagerEffect.OpenExternal(localFileCache.getFileUri(target)))
+                sendEffect(FileManagerEffect.OpenExternal(target))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {

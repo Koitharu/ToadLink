@@ -1,6 +1,5 @@
 package org.koitharu.toadlink.files
 
-import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
@@ -51,6 +50,7 @@ import org.koitharu.toadlink.files.fs.MimeType
 import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
+import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.util.getDisplayMessage
 import org.koitharu.toadlink.ui.util.themeAttributeSize
 import java.util.concurrent.TimeUnit
@@ -64,6 +64,7 @@ fun FileManagerContent(
     val viewModel = hiltViewModel<FileManagerViewModel>()
     val state by viewModel.collectState()
     val context = LocalContext.current
+    val router = LocalRouter.current
     LaunchedEffect(Unit) {
         viewModel.effect.onEach { effect ->
             when (effect) {
@@ -71,14 +72,7 @@ fun FileManagerContent(
                     effect.error.getDisplayMessage(context)
                 )
 
-                is OpenExternal -> {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = effect.uri
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    context.startActivity(
-                        Intent.createChooser(intent, context.getString(R.string.open_with))
-                    )
-                }
+                is OpenExternal -> router.openFileInExternalApp(effect.file)
             }
         }.launchIn(this)
     }

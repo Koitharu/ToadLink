@@ -24,10 +24,4 @@ class LocalFileCache @Inject constructor(
         file.createNewFile()
         return file
     }
-
-    fun getFileUri(file: File): Uri = FileProvider.getUriForFile(
-        context,
-        LocalFileProvider.AUTHORITY,
-        file
-    )
 }

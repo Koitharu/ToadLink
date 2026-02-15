@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.koitharu.toadlink.files.fs.SshFile
@@ -68,13 +69,13 @@ internal fun FileGridItem(
                 val fileIcon = fileIcon(file)
                 if (!showThumbnail || file.isDirectory) {
                     Icon(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(4.dp),
                         painter = painterResource(fileIcon),
                         contentDescription = null
                     )
                 } else {
                     AsyncImage(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(4.dp),
                         model = file.uri,
                         contentDescription = null,
                         error = painterResource(fileIcon),
@@ -85,10 +86,12 @@ internal fun FileGridItem(
             Text(
                 text = file.name,
                 style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
             )
             FileSummary(
                 modifier = Modifier.padding(top = 2.dp),
                 file = file,
+                showDate = false,
             )
             /*Box {
                 IconButton(
@@ -168,6 +171,7 @@ internal fun FileListItem(
                 FileSummary(
                     modifier = Modifier.padding(top = 2.dp),
                     file = file,
+                    showDate = true,
                 )
             }
             Box {
@@ -194,6 +198,7 @@ internal fun FileListItem(
 private fun FileSummary(
     modifier: Modifier,
     file: SshFile,
+    showDate: Boolean,
 ) = when {
     file.isSymlink -> {
         Row(
@@ -212,6 +217,8 @@ private fun FileSummary(
                     .padding(start = 4.dp)
                     .alignByBaseline(),
                 text = file.symlinkTarget.orEmpty(),
+                maxLines = 1,
+                overflow = TextOverflow.MiddleEllipsis,
                 style = MaterialTheme.typography.bodySmall,
                 color = colorResource(R.color.toad),
             )
@@ -223,23 +230,32 @@ private fun FileSummary(
         val sizeString = remember(file.size) {
             formatFileSize(context, file.size)
         }
-        val dateString = remember(file.lastModified) {
-            DateUtils.getRelativeDateTimeString(
-                context,
-                file.lastModified,
-                DateUtils.MINUTE_IN_MILLIS,
-                DateUtils.WEEK_IN_MILLIS,
-                0
-            )
+        val dateString = if (showDate) {
+            remember(file.lastModified) {
+                DateUtils.getRelativeDateTimeString(
+                    context,
+                    file.lastModified,
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.WEEK_IN_MILLIS,
+                    0
+                )
+            }
+        } else {
+            null
         }
         Text(
             modifier = modifier,
-            text = buildString {
-                append(sizeString)
-                append(" · ")
-                append(dateString)
+            text = if (dateString != null) {
+                buildString {
+                    append(sizeString)
+                    append(" · ")
+                    append(dateString)
+                }
+            } else {
+                sizeString
             },
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
         )
     }
 }

@@ -1,6 +1,6 @@
 package org.koitharu.toadlink.files
 
-import android.net.Uri
+import java.io.File
 
 internal sealed interface FileManagerEffect {
 
@@ -9,6 +9,6 @@ internal sealed interface FileManagerEffect {
     ) : FileManagerEffect
 
     data class OpenExternal(
-        val uri: Uri,
+        val file: File,
     ) : FileManagerEffect
 }
