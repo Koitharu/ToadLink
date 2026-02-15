@@ -47,7 +47,7 @@ internal class SshFileSystem(
 
     override fun list(dir: Path): List<Path> {
         val command = buildString {
-            append("ls -lQk1A \"")
+            append("ls -lQk1A --time-style=iso \"")
             append(dir.toString())
             append('"')
         }

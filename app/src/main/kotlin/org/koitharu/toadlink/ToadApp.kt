@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.service.ConnectionService
 import org.koitharu.toadlink.utils.coil.SshImageFetcher
-import org.koitharu.toadlink.utils.coil.ThumbnailFetcher
+import org.koitharu.toadlink.utils.coil.thumbnails.SshThumbnailFetcher
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -36,7 +36,7 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
         .crossfade(true)
         .logger(if (BuildConfig.DEBUG) DebugLogger(Logger.Level.Info) else null)
         .components {
-            add(ThumbnailFetcher.Factory(connectionManager))
+            add(SshThumbnailFetcher.Factory(connectionManager))
             add(SshImageFetcher.Factory(connectionManager))
         }.build()
 

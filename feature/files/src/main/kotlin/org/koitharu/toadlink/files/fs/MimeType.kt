@@ -24,6 +24,8 @@ value class MimeType(private val value: String) {
 
     companion object {
 
+        const val ANY = "*"
+
         val DIRECTORY = MimeType("inode/directory")
         val UNKNOWN = MimeType("application/octet-stream")
 
