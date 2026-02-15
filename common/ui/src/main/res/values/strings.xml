@@ -12,6 +12,7 @@
     <string name="command">Command</string>
     <string name="connected_to_s">Connected to %s</string>
     <string name="connecting_">Connecting…</string>
+    <string name="delete">Delete</string>
     <string name="disconnect">Disconnect</string>
     <string name="disconnected">Disconnected</string>
     <string name="done">Done</string>
@@ -23,6 +24,9 @@
     <string name="execute">Execute</string>
     <string name="file_size_suffixes">B|kB|MB|GB|TB</string>
     <string name="files">Files</string>
+    <string name="get_and_open">Get and open</string>
+    <string name="get_and_save">Get and save</string>
+    <string name="get_and_share">Get and share</string>
     <string name="hide_password">Hide password</string>
     <string name="host_address">Host address</string>
     <string name="media">Media</string>
@@ -37,6 +41,7 @@
     <string name="player_not_supported_message">You need to install the playerctl package on your remote host to make this feature works</string>
     <string name="port">Port</string>
     <string name="remove">Remove</string>
+    <string name="rename">Rename</string>
     <string name="save">Save</string>
     <string name="saved_devices_">Saved devices:</string>
     <string name="select_device">Select device</string>

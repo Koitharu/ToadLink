@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -42,15 +40,17 @@ internal fun FileGridItem(
     showThumbnail: Boolean,
     handleIntent: MviIntentHandler<FileManagerIntent>,
 ) {
+    var isMenuExpanded by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
         onClick = {
             if (file.isDirectory) {
                 handleIntent(FileManagerIntent.Navigate(file.path))
             } else {
-                handleIntent(FileManagerIntent.OpenFile(file))
+                isMenuExpanded = true
             }
         }
     ) {
@@ -69,13 +69,17 @@ internal fun FileGridItem(
                 val fileIcon = fileIcon(file)
                 if (!showThumbnail || file.isDirectory) {
                     Icon(
-                        modifier = Modifier.fillMaxSize().padding(4.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp),
                         painter = painterResource(fileIcon),
                         contentDescription = null
                     )
                 } else {
                     AsyncImage(
-                        modifier = Modifier.fillMaxSize().padding(4.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp),
                         model = file.uri,
                         contentDescription = null,
                         error = painterResource(fileIcon),
@@ -93,23 +97,13 @@ internal fun FileGridItem(
                 file = file,
                 showDate = false,
             )
-            /*Box {
-                IconButton(
-                    onClick = { isMenuExpanded = true },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_menu),
-                        contentDescription = stringResource(R.string.menu),
-                    )
-                }
-                FileContextMenu(
-                    file = file,
-                    isExpanded = isMenuExpanded,
-                    onDismissRequest = { isMenuExpanded = false },
-                    handleIntent = handleIntent,
-                )
-            }*/
         }
+        FileContextMenu(
+            file = file,
+            isExpanded = isMenuExpanded,
+            onDismissRequest = { isMenuExpanded = false },
+            handleIntent = handleIntent,
+        )
     }
 }
 
@@ -125,11 +119,12 @@ internal fun FileListItem(
         modifier = Modifier
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraSmall,
         onClick = {
             if (file.isDirectory) {
                 handleIntent(FileManagerIntent.Navigate(file.path))
             } else {
-                handleIntent(FileManagerIntent.OpenFile(file))
+                isMenuExpanded = true
             }
         }
     ) {
@@ -174,23 +169,13 @@ internal fun FileListItem(
                     showDate = true,
                 )
             }
-            Box {
-                IconButton(
-                    onClick = { isMenuExpanded = true },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_menu),
-                        contentDescription = stringResource(R.string.menu),
-                    )
-                }
-                FileContextMenu(
-                    file = file,
-                    isExpanded = isMenuExpanded,
-                    onDismissRequest = { isMenuExpanded = false },
-                    handleIntent = handleIntent,
-                )
-            }
         }
+        FileContextMenu(
+            file = file,
+            isExpanded = isMenuExpanded,
+            onDismissRequest = { isMenuExpanded = false },
+            handleIntent = handleIntent,
+        )
     }
 }
 
