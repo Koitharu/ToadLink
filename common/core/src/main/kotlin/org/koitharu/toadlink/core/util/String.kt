@@ -29,8 +29,8 @@ fun String.splitByWhitespace(): List<String> = split(SPLIT_REGEX)
 private val OCTAL_REGEX = Regex("""\\([0-7]{1,3})""")
 
 fun String.unescape(): String {
-    val bytes = mutableListOf<Byte>()
-    val sb = StringBuilder()
+    val bytes = ArrayList<Byte>(3)
+    val sb = StringBuilder(length)
     var lastIndex = 0
 
     for (match in OCTAL_REGEX.findAll(this)) {
@@ -48,4 +48,34 @@ fun String.unescape(): String {
     }
     sb.append(this.substring(lastIndex))
     return sb.toString()
+}
+
+fun String.escape(): String {
+    if (isEmpty()) {
+        return this
+    }
+    var escaping = false
+    val utf8Bytes = this.toByteArray(Charsets.UTF_8)
+    val result = StringBuilder(utf8Bytes.size + 2)
+
+    result.append('\'')
+    for (byte in utf8Bytes) {
+        val unsigned = byte.toInt() and 0xFF
+        if (unsigned in 0x00..0x7F) {
+            if (escaping) {
+                result.append("''")
+            }
+            escaping = false
+            result.append(unsigned.toChar())
+        } else {
+            if (!escaping) {
+                result.append("'$'")
+                escaping = true
+            }
+            result.append("\\")
+            result.append(unsigned.toString(8).padStart(3, '0'))
+        }
+    }
+    result.append('\'')
+    return result.toString()
 }

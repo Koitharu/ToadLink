@@ -9,6 +9,7 @@ import kotlinx.coroutines.coroutineScope
 import okio.Path
 import okio.Path.Companion.toPath
 import org.koitharu.toadlink.client.SshConnection
+import org.koitharu.toadlink.core.util.escape
 import org.koitharu.toadlink.core.util.lazy.getOrNull
 import org.koitharu.toadlink.core.util.lazy.suspendLazy
 import org.koitharu.toadlink.core.util.runCatchingCancellable
@@ -28,18 +29,21 @@ class SshFileManager(
     private val dateFormat = SimpleDateFormat("yyyy-mm-dd HH:MM", Locale.ROOT)
     private val xdgUserDirs = suspendLazy(initializer = ::getXdgUserDirsReversed)
 
-    suspend fun resolvePath(path: String): Path = runCatchingCancellable {
-        connection.execute("realpath $path")
-    }.recoverCatching {
-        connection.execute("readlink -f $path")
-    }.map {
-        it.toPath(normalize = false)
-    }.getOrThrow()
+    suspend fun resolvePath(path: String): Path {
+        val escapedPath = path.escape()
+        return runCatchingCancellable {
+            connection.execute("realpath $escapedPath")
+        }.recoverCatching {
+            connection.execute("readlink -f $escapedPath")
+        }.map {
+            it.unescape().toPath(normalize = false)
+        }.getOrThrow()
+    }
 
     suspend fun getUserHome(): Path = connection.execute("xdg-user-dir").toPath()
 
     suspend fun getXdgUserDir(dir: XdgUserDir): Path =
-        connection.execute("xdg-user-dir ${dir.name}").toPath()
+        connection.execute("xdg-user-dir ${dir.name}").unescape().toPath()
 
     suspend fun getXdgUserDirs(): Map<XdgUserDir, Path?> = coroutineScope {
         val homeDir = getUserHome()
@@ -51,7 +55,7 @@ class SshFileManager(
     suspend fun getFileType(
         path: String,
     ): MimeType = connection.execute(
-        "file -bNr --mime-type \"$path\""
+        "file -bNr --mime-type ${path.escape()}"
     ).toMimeTypeOrNull() ?: MimeType.UNKNOWN
 
     suspend fun listFiles(
@@ -63,9 +67,8 @@ class SshFileManager(
             if (includeHidden) {
                 append('A')
             }
-            append(" --time-style=long-iso --time=mtime \"")
-            append(path)
-            append('"')
+            append(" --time-style=long-iso --time=mtime ")
+            append(path.toString().escape())
         }
         val userDirs = xdgUserDirs.getOrNull().orEmpty()
         return connection.execute(command)

@@ -45,7 +45,7 @@ internal class SshConnectionImpl(
         resurrectConnection()
         return runInterruptible(Dispatchers.IO) {
             connection.openSession().use { session ->
-                session.execCommand(cmdline)
+                session.execCommand(String(cmdline.toByteArray(Charsets.ISO_8859_1)))
                 session.waitForCondition(ChannelCondition.EXIT_STATUS, 5_000L)
                 if (session.exitStatus == 0) {
                     session.stdout.bufferedReader().use { it.readText() }.trim()

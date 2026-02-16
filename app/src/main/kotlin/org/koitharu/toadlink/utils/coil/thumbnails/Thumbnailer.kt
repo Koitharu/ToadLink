@@ -1,5 +1,6 @@
 package org.koitharu.toadlink.utils.coil.thumbnails
 
+import org.koitharu.toadlink.core.util.escape
 import org.koitharu.toadlink.files.fs.MimeType
 
 data class Thumbnailer(
@@ -12,8 +13,8 @@ data class Thumbnailer(
         inputPath: String,
         size: Int
     ) = exec.replace("%s", size.toString())
-        .replace("%u", "\"file://$inputPath\"")
-        .replace("%i", "\"$inputPath\"")
+        .replace("%u", "file://${inputPath.escape()}")
+        .replace("%i", inputPath.escape())
         .replace("%o", "/dev/stdout")
 
     fun isSupported(mimeType: MimeType) = mimeTypes.any { type ->

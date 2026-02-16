@@ -42,7 +42,7 @@ internal class SCPSource(
 
     private fun openSession() = connection.openSession().also {
         session = it
-        it.execCommand("scp -f \"$path\"")
+        it.execCommand("scp -f $path")
         val output = it.stdin.buffered()
         val input = it.stdout.bufferedReader()
 
