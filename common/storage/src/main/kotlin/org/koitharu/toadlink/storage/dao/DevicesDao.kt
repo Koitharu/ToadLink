@@ -15,6 +15,9 @@ internal abstract class DevicesDao {
     @Query("SELECT * FROM devices WHERE id = :id")
     abstract suspend fun find(id: Int): DeviceEntity
 
+    @Query("DELETE FROM devices WHERE id = :id")
+    abstract suspend fun delete(id: Int)
+
     @Upsert
-    abstract suspend fun upsert(entity: DeviceEntity)
+    abstract suspend fun upsert(entity: DeviceEntity): Long
 }

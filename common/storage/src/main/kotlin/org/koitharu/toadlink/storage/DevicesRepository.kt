@@ -16,10 +16,12 @@ class DevicesRepository @Inject internal constructor(
 
     suspend fun get(id: Int): DeviceDescriptor = db.devicesDao.find(id).toDeviceDescriptor()
 
+    suspend fun delete(id: Int) = db.devicesDao.delete(id)
+
     fun observeAll(): Flow<ImmutableList<DeviceDescriptor>> = db.devicesDao.observeAll()
         .map { it.map { x -> x.toDeviceDescriptor() }.toImmutableList() }
 
-    suspend fun store(deviceDescriptor: DeviceDescriptor) {
-        db.devicesDao.upsert(DeviceEntity(deviceDescriptor))
+    suspend fun store(deviceDescriptor: DeviceDescriptor): Int {
+        return db.devicesDao.upsert(DeviceEntity(deviceDescriptor)).toInt()
     }
 }

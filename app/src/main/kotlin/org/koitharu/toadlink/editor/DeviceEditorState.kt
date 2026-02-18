@@ -1,8 +1,10 @@
 package org.koitharu.toadlink.editor
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import org.koitharu.toadlink.core.DeviceDescriptor
 
+@Immutable
 data class DeviceEditorState(
     val isNewDevice: Boolean,
     val isLoading: Boolean,
@@ -16,6 +18,8 @@ data class DeviceEditorState(
     @field:StringRes
     val usernameError: Int,
     val password: String,
+    val alias: String,
+    val connectNow: Boolean,
 ) {
 
     constructor(device: DeviceDescriptor) : this(
@@ -28,6 +32,8 @@ data class DeviceEditorState(
         hostnameError = 0,
         portError = 0,
         usernameError = 0,
+        alias = device.alias.orEmpty(),
+        connectNow = false,
     )
 
     constructor(initialAddress: String?, isNewDevice: Boolean) : this(
@@ -40,7 +46,15 @@ data class DeviceEditorState(
         hostnameError = 0,
         portError = 0,
         usernameError = 0,
+        alias = "",
+        connectNow = true,
     )
 
     fun hasErrors() = portError != 0 || hostnameError != 0 || usernameError != 0
+
+    fun isDoneEnabled() = !isLoading &&
+            hostname.isNotEmpty() &&
+            port > 0 &&
+            username.isNotEmpty() &&
+            password.isNotEmpty()
 }

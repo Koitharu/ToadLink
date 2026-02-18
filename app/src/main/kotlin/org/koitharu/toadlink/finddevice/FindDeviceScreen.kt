@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -11,8 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +61,7 @@ fun FindDeviceScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     val router = LocalRouter.current
     val context = LocalContext.current
-    LaunchedEffect("errors") {
+    LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is OnError -> snackbarHostState.showSnackbar(effect.error.getDisplayMessage(context))
@@ -108,13 +107,16 @@ private fun FindDeviceContent(
         },
         content = { contentPadding ->
             PullToRefreshBox(
+                modifier = Modifier.fillMaxSize(),
                 isRefreshing = false,
                 onRefresh = {
                     handleIntent(FindDeviceIntent.Refresh)
                 }
             ) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(scrollBehavior.nestedScrollConnection),
                     contentPadding = contentPadding
                 ) {
                     if (state.savedDevices.isNotEmpty()) {
@@ -303,8 +305,9 @@ private fun DeviceItem(
                         contentDescription = stringResource(R.string.menu),
                     )
                 }
-                DeviceContextMenu(
+                DevicePopupMenu(
                     device = device,
+                    isConnected = isConnected,
                     isExpanded = isMenuExpanded,
                     onDismissRequest = { isMenuExpanded = false },
                     handleIntent = handleIntent,
@@ -313,30 +316,6 @@ private fun DeviceItem(
         }
     }
 }
-
-@Composable
-private fun DeviceContextMenu(
-    device: DeviceDescriptor,
-    isExpanded: Boolean,
-    onDismissRequest: () -> Unit,
-    handleIntent: MviIntentHandler<FindDeviceIntent>,
-) = DropdownMenu(
-    expanded = isExpanded,
-    onDismissRequest = onDismissRequest,
-) {
-    LocalRouter.current
-    DropdownMenuItem(
-        text = { Text(stringResource(R.string.edit)) },
-        onClick = {
-
-        },
-    )
-    DropdownMenuItem(
-        text = { Text(stringResource(R.string.remove)) },
-        onClick = { },
-    )
-}
-
 
 @Preview
 @Composable

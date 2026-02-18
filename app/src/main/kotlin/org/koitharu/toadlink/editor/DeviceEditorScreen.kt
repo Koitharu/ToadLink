@@ -1,12 +1,14 @@
 package org.koitharu.toadlink.editor
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -16,19 +18,27 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -40,12 +50,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import org.koitharu.toadlink.core.util.toIntLenient
+import org.koitharu.toadlink.editor.DeviceEditorEffect.Back
+import org.koitharu.toadlink.editor.DeviceEditorEffect.OnError
+import org.koitharu.toadlink.editor.DeviceEditorEffect.OpenDevice
+import org.koitharu.toadlink.editor.DeviceEditorIntent.ToggleConnectNow
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateAlias
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateHostname
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePassword
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePort
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateUsername
+import org.koitharu.toadlink.nav.ControlDestination
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.composables.BackNavigationIcon
+import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
+import org.koitharu.toadlink.ui.util.getDisplayMessage
 import org.koitharu.toadlink.ui.util.plus
 
 @Composable
@@ -56,20 +76,43 @@ fun AddDeviceScreen(
     val viewModel = hiltViewModel<DeviceEditorViewModel, DeviceEditorViewModel.Factory> {
         it.create(deviceId, initialAddress)
     }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val router = LocalRouter.current
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is OnError -> snackbarHostState.showSnackbar(
+                    effect.error.getDisplayMessage(context)
+                )
+
+                is OpenDevice -> router.changeRoot(
+                    ControlDestination(effect.deviceId)
+                )
+
+                Back -> router.removeLastOrNull()
+            }
+        }
+    }
     AddDeviceContent(
         state = viewModel.collectState().value,
-        handleIntent = viewModel::handleIntent,
+        snackbarHostState = snackbarHostState,
+        handleIntent = viewModel,
     )
 }
 
 @Composable
 private fun AddDeviceContent(
     state: DeviceEditorState,
-    handleIntent: (DeviceEditorIntent) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    handleIntent: MviIntentHandler<DeviceEditorIntent>
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = {
+            SnackbarHost(snackbarHostState)
+        },
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -85,19 +128,25 @@ private fun AddDeviceContent(
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
+                navigationIcon = {
+                    BackNavigationIcon()
+                },
                 scrollBehavior = scrollBehavior,
             )
         },
         bottomBar = {
-            BottomButtonsBar(handleIntent)
+            BottomButtonsBar(
+                isDoneEnabled = state.isDoneEnabled(),
+                handleIntent = handleIntent,
+            )
         },
         content = { contentPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(PaddingValues(16.dp) + contentPadding)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
 
                 TextField(
@@ -106,26 +155,46 @@ private fun AddDeviceContent(
                     singleLine = true,
                     isError = state.hostnameError != 0,
                     onValueChange = { handleIntent(UpdateHostname(it)) },
+                    enabled = !state.isLoading,
                     label = { Text(stringResource(R.string.host_address)) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Uri,
                         capitalization = KeyboardCapitalization.None,
                         imeAction = ImeAction.Next,
-                    )
+                    ),
+                    supportingText = {
+                        AnimatedVisibility(state.hostnameError != 0) {
+                            Text(stringResource(state.hostnameError))
+                        }
+                    },
                 )
 
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
-                    value = state.port.toString(),
+                    value = state.port.let {
+                        if (it == 0) "" else it.toString()
+                    },
                     singleLine = true,
                     isError = state.portError != 0,
-                    onValueChange = { handleIntent(UpdatePort(it.toInt())) },
+                    onValueChange = { handleIntent(UpdatePort(it.toIntLenient())) },
                     label = { Text(stringResource(R.string.port)) },
+                    enabled = !state.isLoading,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         capitalization = KeyboardCapitalization.None,
                         imeAction = ImeAction.Next,
-                    )
+                    ),
+                    supportingText = {
+                        AnimatedVisibility(state.portError != 0) {
+                            Text(stringResource(state.portError))
+                        }
+                    },
+                )
+
+                Text(
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                    text = stringResource(R.string.authentication),
+                    style = MaterialTheme.typography.titleMedium,
                 )
 
                 TextField(
@@ -135,6 +204,7 @@ private fun AddDeviceContent(
                     isError = state.usernameError != 0,
                     onValueChange = { handleIntent(UpdateUsername(it)) },
                     label = { Text(stringResource(R.string.username)) },
+                    enabled = !state.isLoading,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Ascii,
                         capitalization = KeyboardCapitalization.None,
@@ -154,6 +224,7 @@ private fun AddDeviceContent(
                     onValueChange = { handleIntent(UpdatePassword(it)) },
                     singleLine = true,
                     label = { Text(stringResource(R.string.password)) },
+                    enabled = !state.isLoading,
                     visualTransformation = if (isPasswordVisible) {
                         VisualTransformation.None
                     } else {
@@ -161,7 +232,7 @@ private fun AddDeviceContent(
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done,
+                        imeAction = ImeAction.Next,
                     ),
                     trailingIcon = {
                         IconButton(
@@ -184,8 +255,53 @@ private fun AddDeviceContent(
                                 )
                             )
                         }
-                    }
+                    },
                 )
+
+                Text(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    text = stringResource(R.string.other),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+
+                TextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = state.alias,
+                    singleLine = true,
+                    onValueChange = { handleIntent(UpdateAlias(it)) },
+                    enabled = !state.isLoading,
+                    label = { Text(stringResource(R.string.device_name_opt)) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Done,
+                    ),
+                )
+
+                if (state.isNewDevice) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 54.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .padding(top = 4.dp)
+                            .clickable(
+                                onClick = { handleIntent(ToggleConnectNow) }
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .weight(1f),
+                            text = stringResource(R.string.connect_now),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Switch(
+                            checked = state.connectNow,
+                            onCheckedChange = null,
+                        )
+                    }
+                }
             }
         }
     )
@@ -193,12 +309,13 @@ private fun AddDeviceContent(
 
 @Composable
 private fun BottomButtonsBar(
-    handleIntent: (DeviceEditorIntent) -> Unit,
+    isDoneEnabled: Boolean,
+    handleIntent: MviIntentHandler<DeviceEditorIntent>,
 ) = BottomAppBar {
     val router = LocalRouter.current
     OutlinedButton(
         modifier = Modifier.weight(1f),
-        onClick = { router.back() },
+        onClick = { router.removeLastOrNull() },
     ) {
         Text(stringResource(android.R.string.cancel))
     }
@@ -207,6 +324,7 @@ private fun BottomButtonsBar(
     )
     Button(
         modifier = Modifier.weight(1f),
+        enabled = isDoneEnabled,
         onClick = {
             handleIntent(DeviceEditorIntent.SaveDevice)
         }
@@ -222,5 +340,6 @@ private fun AddDeviceContentPreview() = AddDeviceContent(
         username = "test",
         usernameError = R.string.error_generic
     ),
-    handleIntent = {}
+    snackbarHostState = SnackbarHostState(),
+    handleIntent = MviIntentHandler.NoOp,
 )

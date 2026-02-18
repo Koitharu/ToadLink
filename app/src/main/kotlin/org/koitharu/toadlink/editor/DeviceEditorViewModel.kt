@@ -11,7 +11,11 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.DeviceDescriptor
+import org.koitharu.toadlink.core.util.nullIfEmpty
 import org.koitharu.toadlink.core.util.runCatchingCancellable
+import org.koitharu.toadlink.editor.DeviceEditorEffect.Back
+import org.koitharu.toadlink.editor.DeviceEditorEffect.OnError
+import org.koitharu.toadlink.editor.DeviceEditorEffect.OpenDevice
 import org.koitharu.toadlink.editor.DeviceEditorIntent.SaveDevice
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateHostname
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePassword
@@ -25,7 +29,6 @@ import org.koitharu.toadlink.ui.mvi.MviViewModel
 class DeviceEditorViewModel @AssistedInject constructor(
     @Assisted deviceId: Int,
     @Assisted initialAddress: String?,
-    private val connectionManager: SshConnectionManager,
     private val storage: DevicesRepository,
 ) : MviViewModel<DeviceEditorState, DeviceEditorIntent, DeviceEditorEffect>(
     DeviceEditorState(initialAddress, deviceId == 0)
@@ -63,6 +66,14 @@ class DeviceEditorViewModel @AssistedInject constructor(
             it.copy(username = intent.value)
         }
 
+        DeviceEditorIntent.ToggleConnectNow -> state.update {
+            it.copy(connectNow = !it.connectNow)
+        }
+
+        is DeviceEditorIntent.UpdateAlias -> state.update {
+            it.copy(alias = intent.value)
+        }
+
         SaveDevice -> addDevice()
     }
 
@@ -75,15 +86,33 @@ class DeviceEditorViewModel @AssistedInject constructor(
             val snapshot = state.updateAndGet {
                 it.copy(isLoading = true)
             }
-            val data = DeviceDescriptor(
-                id = 0,
-                hostname = snapshot.hostname,
-                port = snapshot.port,
-                alias = null,
-                username = snapshot.username,
-                password = snapshot.password
-            )
-            storage.store(data)
+            runCatchingCancellable {
+                if (snapshot.connectNow) {
+                    SshConnectionManager.testConnection(
+                        hostname = snapshot.hostname,
+                        port = snapshot.port,
+                        username = snapshot.username,
+                        password = snapshot.password,
+                    )
+                }
+                val data = DeviceDescriptor(
+                    id = 0,
+                    hostname = snapshot.hostname,
+                    port = snapshot.port,
+                    alias = snapshot.alias.trim().nullIfEmpty(),
+                    username = snapshot.username,
+                    password = snapshot.password
+                )
+                storage.store(data)
+            }.onSuccess { deviceId ->
+                if (snapshot.isNewDevice && snapshot.connectNow) {
+                    sendEffect(OpenDevice(deviceId))
+                } else {
+                    sendEffect(Back)
+                }
+            }.onFailure { error ->
+                sendEffect(OnError(error))
+            }
             state.update {
                 it.copy(isLoading = false)
             }

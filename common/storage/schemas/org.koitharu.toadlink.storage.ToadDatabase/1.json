@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "42655ff4dbd1d0953e9828c0bda5bb22",
+    "identityHash": "afd76a3481a76de0faab58bc068a7261",
     "entities": [
       {
         "tableName": "devices",
@@ -51,6 +51,17 @@
           ]
         },
         "indices": [
+          {
+            "name": "index_devices_hostname_port_username",
+            "unique": true,
+            "columnNames": [
+              "hostname",
+              "port",
+              "username"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_devices_hostname_port_username` ON `${TABLE_NAME}` (`hostname`, `port`, `username`)"
+          },
           {
             "name": "index_devices_id",
             "unique": false,
@@ -134,7 +145,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '42655ff4dbd1d0953e9828c0bda5bb22')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'afd76a3481a76de0faab58bc068a7261')"
     ]
   }
 }

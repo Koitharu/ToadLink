@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnectionManager
+import org.koitharu.toadlink.finddevice.FindDeviceIntent.Disconnect
 import org.koitharu.toadlink.finddevice.FindDeviceIntent.Refresh
+import org.koitharu.toadlink.finddevice.FindDeviceIntent.Remove
 import org.koitharu.toadlink.network.NetworkScanner
 import org.koitharu.toadlink.storage.DevicesRepository
 import org.koitharu.toadlink.ui.mvi.MviViewModel
@@ -50,6 +52,16 @@ class FindDeviceViewModel @Inject constructor(
                     networkScanningJob = scanLocalNetwork()
                 }
             }
+
+            is Disconnect -> connectionManager.disconnect(intent.deviceId)
+            is Remove -> removeDevice(intent.deviceId)
+        }
+    }
+
+    private fun removeDevice(deviceId: Int) {
+        viewModelScope.launch(Dispatchers.Default) {
+            connectionManager.disconnect(deviceId)
+            devicesRepository.delete(deviceId)
         }
     }
 

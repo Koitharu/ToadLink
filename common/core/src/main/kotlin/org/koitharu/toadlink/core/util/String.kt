@@ -6,6 +6,10 @@ fun String.lineCount(): Int {
     return count { x -> x == '\n' }
 }
 
+fun String.toIntLenient(): Int = filter { it.isDigit() }.toIntOrNull() ?: 0
+
+fun <C: CharSequence> C.nullIfEmpty(): C? = ifEmpty { null }
+
 fun Int.formatTimeSeconds(): String {
     if (this == 0) {
         return "00:00"

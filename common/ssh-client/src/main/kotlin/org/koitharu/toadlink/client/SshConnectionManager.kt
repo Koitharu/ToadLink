@@ -70,6 +70,13 @@ class SshConnectionManager(
         _activeConnection.getAndUpdate { null }?.close()
     }
 
+    fun disconnect(deviceId: Int) {
+        // TODO support multiple connections
+        if (_activeConnection.value?.host?.id == deviceId) {
+            disconnect()
+        }
+    }
+
     private fun observeConnection(connection: SshConnectionImpl) = coroutineScope.launch {
         connection.isConnected.collect { connected ->
             if (!connected) {
@@ -84,13 +91,26 @@ class SshConnectionManager(
             Logger.enabled = isEnabled
         }
 
+        suspend fun testConnection(
+            hostname: String,
+            port: Int,
+            username: String,
+            password: String,
+        ) = runInterruptible(Dispatchers.IO) {
+            Connection(hostname, port).use { connection ->
+                connection.connect()
+                connection.authenticateWithPassword(username, password)
+                connection.ping()
+            }
+        }
+
         suspend fun getHostKey(
             hostname: String,
             port: Int,
         ): ByteArray = runInterruptible(Dispatchers.IO) {
-            val connection = Connection(hostname, port)
-            connection.connect()
-            connection.connectionInfo.serverHostKey
+            Connection(hostname, port).use { connection ->
+                connection.connect().serverHostKey
+            }
         }
     }
 }
