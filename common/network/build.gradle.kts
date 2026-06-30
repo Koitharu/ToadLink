@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "org.koitharu.toadlink.network"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
