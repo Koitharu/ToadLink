@@ -7,10 +7,11 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
+import kotlin.time.Duration
 
-fun tickerFlow(delayMs: Long): Flow<Long> = channelFlow {
+fun tickerFlow(delay: Duration): Flow<Long> = channelFlow {
     while (isActive && !trySend(System.currentTimeMillis()).isClosed) {
-        delay(delayMs)
+        delay(delay)
     }
 }
 

@@ -1,7 +1,10 @@
 package org.koitharu.toadlink.files.fs
 
+import androidx.compose.runtime.Immutable
+
 
 @JvmInline
+@Immutable
 value class MimeType(private val value: String) {
 
     val type: String?

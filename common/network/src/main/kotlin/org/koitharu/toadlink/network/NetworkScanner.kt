@@ -37,12 +37,13 @@ class NetworkScanner(
             }
         }
     }.runningFold(persistentListOf()) { list, device ->
-        list.add(device)
+        list.adding(device)
     }
 
+    @Suppress("DEPRECATION")
     private fun getLocalIpAddress(): String? {
         val wifiInfo = wifiManager.connectionInfo
-        val ipAddress = wifiInfo.getIpAddress()
+        val ipAddress = wifiInfo.ipAddress
         return Formatter.formatIpAddress(ipAddress)
     }
 

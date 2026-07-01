@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.res.getDimensionPixelOffsetOrThrow
 import androidx.core.content.res.getDimensionPixelSizeOrThrow
+import androidx.core.content.res.use
 
 @Composable
 @ReadOnlyComposable

@@ -2,7 +2,6 @@ package org.koitharu.toadlink.ui.util
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import org.koitharu.toadlink.ui.R

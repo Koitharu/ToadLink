@@ -27,6 +27,7 @@ import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.storage.RemoteActionsRepository
 import org.koitharu.toadlink.ui.mvi.MviViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = ActionEditorViewModel.Factory::class)
 internal class ActionEditorViewModel @AssistedInject constructor(
@@ -40,7 +41,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
             state
                 .map { it.cmdline.text.getWordAt(it.cmdline.selection.end) }
                 .distinctUntilChanged()
-                .debounce(300L)
+                .debounce(300.milliseconds)
                 .mapLatest {
                     getCompletion(it)
                 }.collect { completion ->

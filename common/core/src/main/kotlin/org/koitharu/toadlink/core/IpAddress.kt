@@ -1,7 +1,11 @@
 package org.koitharu.toadlink.core
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 sealed interface IpAddress : Comparable<IpAddress> {
 
+    @Immutable
     data class IPv4(
         val b1: UByte,
         val b2: UByte,
