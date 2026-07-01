@@ -20,6 +20,8 @@ interface Router : MutableList<NavKey> {
     }
 
     fun openFileInExternalApp(file: File)
+
+    fun openShare(file: File, mimeType: String?, title: CharSequence? = null)
 }
 
 val LocalRouter = compositionLocalOf<Router> { StubRouter() }
@@ -28,4 +30,6 @@ val LocalRouter = compositionLocalOf<Router> { StubRouter() }
 private class StubRouter : Router, MutableList<NavKey> by ArrayList() {
 
     override fun openFileInExternalApp(file: File) = Unit
+
+    override fun openShare(file: File, mimeType: String?, title: CharSequence?) = Unit
 }

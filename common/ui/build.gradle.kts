@@ -46,6 +46,7 @@ android {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.activity.compose)
 
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.ui)

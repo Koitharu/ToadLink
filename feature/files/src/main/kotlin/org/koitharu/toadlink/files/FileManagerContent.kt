@@ -38,11 +38,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import okio.Path.Companion.toPath
 import org.koitharu.toadlink.files.FileManagerEffect.OnError
+import org.koitharu.toadlink.files.FileManagerEffect.OnFileSaved
 import org.koitharu.toadlink.files.FileManagerEffect.OpenExternal
+import org.koitharu.toadlink.files.FileManagerEffect.OpenShare
 import org.koitharu.toadlink.files.FileManagerIntent.CancelFileTransfer
 import org.koitharu.toadlink.files.FileManagerIntent.NavigateUp
 import org.koitharu.toadlink.files.data.XdgUserDir
@@ -66,15 +69,19 @@ fun FileManagerContent(
     val context = LocalContext.current
     val router = LocalRouter.current
     LaunchedEffect(Unit) {
-        viewModel.effect.onEach { effect ->
+        viewModel.effect.collect { effect ->
             when (effect) {
                 is OnError -> snackbarHostState.showSnackbar(
                     effect.error.getDisplayMessage(context)
                 )
 
                 is OpenExternal -> router.openFileInExternalApp(effect.file)
+                is OpenShare -> router.openShare(effect.file, effect.mimeType.toString())
+                is OnFileSaved -> snackbarHostState.showSnackbar(
+                    context.getString(R.string.file_saved, effect.fileName)
+                )
             }
-        }.launchIn(this)
+        }
     }
     BackHandler(
         enabled = state.path.parent != null,

@@ -1,5 +1,7 @@
 package org.koitharu.toadlink.control
 
+import android.Manifest
+import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -26,6 +28,7 @@ import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults.rememberTooltipPositionProvider
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,11 +52,15 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlContent
 import org.koitharu.toadlink.nav.FindDeviceDestination
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.nav.LocalRouter
+import org.koitharu.toadlink.ui.nav.rememberPermissionCheck
 
 @Composable
 fun ControlScreen(deviceId: Int) {
     val viewModel = hiltViewModel<ControlViewModel, ControlViewModel.Factory> {
         it.create(deviceId)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionCheck(Manifest.permission.POST_NOTIFICATIONS)
     }
     val state by viewModel.collectState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -97,6 +105,9 @@ private fun ControlContent(
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors().copy(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ),
                 actions = {
                     val router = LocalRouter.current
                     TooltipBox(
@@ -148,6 +159,9 @@ private fun ControlContent(
             }
         }
     ) { contentPadding ->
+        if (LocalInspectionMode.current) {
+            return@Scaffold
+        }
         when (state) {
             is ControlState.Connected -> when (state.section) {
                 ControlSection.ACTIONS -> ActionsContent(

@@ -2,10 +2,12 @@ package org.koitharu.toadlink.nav
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.app.ShareCompat
 import androidx.core.content.FileProvider
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import org.koitharu.toadlink.files.data.LocalFileProvider
+import org.koitharu.toadlink.files.fs.MimeType
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.nav.Router
 import java.io.File
@@ -26,5 +28,21 @@ class RouterImpl(
         context.startActivity(
             Intent.createChooser(intent, context.getString(R.string.open_with))
         )
+    }
+
+    override fun openShare(file: File, mimeType: String?, title: CharSequence?) {
+        val intent = ShareCompat.IntentBuilder(context)
+            .setStream(
+                FileProvider.getUriForFile(
+                    context,
+                    LocalFileProvider.AUTHORITY,
+                    file
+                )
+            )
+            .setType(mimeType ?: MimeType.fromFileName(file.name)?.toString())
+            .setChooserTitle(title)
+            .createChooserIntent()
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        context.startActivity(intent)
     }
 }

@@ -1,5 +1,6 @@
 package org.koitharu.toadlink.di
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.wifi.WifiManager
 import androidx.core.app.NotificationManagerCompat
@@ -22,4 +23,9 @@ class AndroidModule {
     fun provideWifiManager(
         @ApplicationContext context: Context,
     ) = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
+    @Provides
+    fun provideContentResolver(
+        @ApplicationContext context: Context,
+    ): ContentResolver = context.contentResolver
 }

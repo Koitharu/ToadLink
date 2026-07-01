@@ -24,7 +24,7 @@ internal class SshFileSystem(
     )
 
     override fun atomicMove(source: Path, target: Path) {
-        connection.executeBlocking("mv -f -r -T ${source.escaped()} ${target.escaped()}")
+        connection.executeBlocking("mv --no-copy -f -T ${source.escaped()} ${target.escaped()}")
     }
 
     override fun canonicalize(path: Path): Path {

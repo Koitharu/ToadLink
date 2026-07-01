@@ -59,4 +59,11 @@
     <string name="show_thumbnails">Show files thumbnails</string>
     <string name="show_thumbnails_summary">Show file content thumbnails for supported file formats</string>
     <string name="username">Username</string>
+    <string name="file_saved">File \"%s\" was successfully saved</string>
+    <string name="file_removal_confirmation">Are you sure want to delete the file \"%s\"?</string>
+    <string name="undone_notice">This action cannot be undone.</string>
+    <string name="delete_file">Delete file</string>
+    <string name="rename_file">Rename file</string>
+    <string name="file_name">File name</string>
+    <string name="rename_file_message">Please enter a new name for the file \"%s\":</string>
 </resources>

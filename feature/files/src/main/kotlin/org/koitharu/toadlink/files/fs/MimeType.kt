@@ -1,6 +1,8 @@
 package org.koitharu.toadlink.files.fs
 
 import androidx.compose.runtime.Immutable
+import coil3.annotation.InternalCoilApi
+import coil3.util.MimeTypeMap
 
 
 @JvmInline
@@ -38,9 +40,22 @@ value class MimeType(private val value: String) {
             null
         }
 
+        @OptIn(InternalCoilApi::class)
+        fun fromFileName(fileName: String): MimeType? {
+            val extension = getNormalizedExtension(fileName) ?: return null
+            return MimeTypeMap.getMimeTypeFromExtension(extension)?.toMimeTypeOrNull()
+        }
+
         private const val TYPE_IMAGE = "image"
         private const val TYPE_VIDEO = "video"
         private val REGEX_MIME = Regex("^\\w+/([-+.\\w]+|\\*)$", RegexOption.IGNORE_CASE)
+
+        private fun getNormalizedExtension(name: String): String? = name
+            .lowercase()
+            .removeSuffix("~")
+            .removeSuffix(".tmp")
+            .substringAfterLast('.', "")
+            .takeIf { it.length in 1..5 }
     }
 }
 

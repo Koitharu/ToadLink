@@ -1,6 +1,5 @@
 package org.koitharu.toadlink.files.data
 
-import android.webkit.MimeTypeMap
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.async
@@ -100,24 +99,13 @@ class SshFileManager(
             type = if (isDirectory) {
                 MimeType.DIRECTORY
             } else {
-                getMimeType(name) ?: MimeType.UNKNOWN
+                MimeType.fromFileName(name) ?: MimeType.UNKNOWN
             },
             xdgUserDir = userDirs[path]
         )
     }
 
     private fun String.unquote() = removeSurrounding("\"")
-
-    private fun getMimeType(fileName: String) = getNormalizedExtension(fileName)?.let {
-        MimeTypeMap.getSingleton().getMimeTypeFromExtension(it)
-    }?.toMimeTypeOrNull()
-
-    private fun getNormalizedExtension(name: String): String? = name
-        .lowercase()
-        .removeSuffix("~")
-        .removeSuffix(".tmp")
-        .substringAfterLast('.', "")
-        .takeIf { it.length in 1..5 }
 
     private suspend fun getXdgUserDirsReversed(): Map<Path, XdgUserDir> = coroutineScope {
         val homeDir = getUserHome()
