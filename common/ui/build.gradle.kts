@@ -56,6 +56,7 @@ dependencies {
     api(libs.androidx.compose.material3)
 
     api(libs.androidx.navigation.runtime)
+    api(libs.kotlinx.collections.immutable)
 
     debugApi(libs.androidx.compose.ui.tooling)
     debugApi(libs.androidx.compose.ui.test.manifest)

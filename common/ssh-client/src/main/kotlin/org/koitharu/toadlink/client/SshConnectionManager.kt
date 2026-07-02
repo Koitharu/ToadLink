@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import org.connectbot.sshlib.ConnectResult
+import org.connectbot.sshlib.SshClient
+import org.connectbot.sshlib.SshClientConfig
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.util.firstNotNull
 import org.koitharu.toadlink.core.util.runCatchingCancellable
@@ -49,22 +52,22 @@ class SshConnectionManager(
         }
         return coroutineScope.async {
             runCatchingCancellable {
-                val connection = Connection(deviceDescriptor.hostname, deviceDescriptor.port)
-                val sshConnection = SshConnectionImpl(deviceDescriptor, connection)
-                connection.addConnectionMonitor(sshConnection)
+                val config = SshClientConfig {
+                    host = deviceDescriptor.hostname
+                    port = deviceDescriptor.port
+                    preferPasswordAuth = deviceDescriptor.key == null
+                }
+                val client = SshClient(config)
+                val sshConnection = SshConnectionImpl(deviceDescriptor, client)
                 observeConnection(sshConnection)
-                runInterruptible(Dispatchers.IO) {
-                    connection.connect()
-                    deviceDescriptor.key?.let { key ->
-                        connection.authenticateWithPublicKey(
-                            deviceDescriptor.username,
-                            key.toCharArray(),
-                            deviceDescriptor.password
-                        )
-                    } ?: connection.authenticateWithPassword(
-                        deviceDescriptor.username,
-                        deviceDescriptor.password
-                    )
+                when (val result = client.connect()) {
+                    ConnectResult.Success -> {
+                        client.authenticatePassword(deviceDescriptor.username, deviceDescriptor.password)
+                    }
+                    is ConnectResult.AlgorithmMismatch -> TODO()
+                    is ConnectResult.HostKeyRejected -> TODO()
+                    is ConnectResult.ProtocolError -> TODO()
+                    is ConnectResult.TransportError -> TODO()
                 }
                 _activeConnection.getAndUpdate { sshConnection }?.close()
                 sshConnection

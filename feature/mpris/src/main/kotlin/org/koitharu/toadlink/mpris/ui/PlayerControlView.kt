@@ -48,16 +48,17 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Prev
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Rewind
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Seek
 import org.koitharu.toadlink.ui.composables.IconButtonWithTooltip
+import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import kotlin.math.roundToInt
 import org.koitharu.toadlink.ui.R as CR
 
 @Composable
-fun PlayerControlView(
+internal fun PlayerControlView(
     modifier: Modifier = Modifier,
     metadata: PlayerMetadata?,
     state: PlayerState,
     isLoading: Boolean,
-    handleAction: (PlayerControlAction) -> Unit,
+    handleAction: MviIntentHandler<PlayerControlAction>,
 ) = Column(
     modifier = Modifier
         .fillMaxSize()
@@ -128,7 +129,7 @@ fun PlayerControlView(
 private fun PositionSlider(
     length: Int,
     position: Int,
-    handleAction: (PlayerControlAction) -> Unit,
+    handleAction: MviIntentHandler<PlayerControlAction>,
 ) {
     if (length > 0) {
         var targetPosition by remember(position) { mutableIntStateOf(position) }
@@ -157,7 +158,7 @@ private fun PositionSlider(
 @Composable
 private fun ButtonBar(
     modifier: Modifier = Modifier,
-    handleAction: (PlayerControlAction) -> Unit,
+    handleAction: MviIntentHandler<PlayerControlAction>,
     isLoading: Boolean,
     state: PlayerState,
 ) = Row(
@@ -271,5 +272,5 @@ private fun PreviewPlayerControlViewLoading() = PlayerControlView(
     ),
     state = PlayerState.PAUSED,
     isLoading = true,
-    handleAction = {}
+    handleAction = {},
 )

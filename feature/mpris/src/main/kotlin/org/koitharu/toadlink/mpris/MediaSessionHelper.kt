@@ -9,9 +9,11 @@ import androidx.core.app.PendingIntentCompat
 import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import coil3.toBitmap
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.ui.R
 import java.util.concurrent.TimeUnit
 
@@ -128,8 +130,12 @@ class MediaSessionHelper(
     }
 
     private inline fun runCommand(crossinline block: suspend MPRISClient.() -> Unit) {
-        coroutineScope.launch {
-            runCatching { client.block() }
+        coroutineScope.launch(Dispatchers.Default) {
+            runCatchingCancellable {
+                client.block()
+            }.onFailure { e ->
+                e.printStackTrace()
+            }
         }
     }
 

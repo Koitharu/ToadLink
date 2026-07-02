@@ -24,7 +24,7 @@ okio = "3.17.0"
 room = "2.8.4"
 runtime = "1.11.3"
 serialization = "1.11.0"
-sshlib = "2.2.40"
+sshlib = "2.2.48"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }

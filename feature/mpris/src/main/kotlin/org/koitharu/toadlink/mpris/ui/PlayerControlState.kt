@@ -1,6 +1,7 @@
 package org.koitharu.toadlink.mpris.ui
 
 import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
 import org.koitharu.toadlink.mpris.PlayerMetadata
 import org.koitharu.toadlink.mpris.PlayerState
 
@@ -21,5 +22,7 @@ internal sealed interface PlayerControlState {
         val state: PlayerState,
         val metadata: PlayerMetadata?,
         val isLoading: Boolean,
+        val players: ImmutableList<String>,
+        val selectedPlayer: String?,
     ) : PlayerControlState
 }

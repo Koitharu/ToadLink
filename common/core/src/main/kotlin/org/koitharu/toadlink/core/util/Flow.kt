@@ -2,6 +2,7 @@ package org.koitharu.toadlink.core.util
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -27,3 +28,8 @@ fun <T> Flow<T>.chunked(size: Int): Flow<List<T>> = flow {
 }
 
 suspend fun <T : Any> Flow<T?>.firstNotNull(): T = filterNotNull().first()
+
+fun <T> Flow<T>.logErrors(): Flow<T> = catch { e ->
+    e.printStackTrace()
+    throw e
+}

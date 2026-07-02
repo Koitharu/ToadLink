@@ -43,6 +43,8 @@ fun EmptyState(
         modifier = Modifier.padding(
             top = 16.dp,
             bottom = if (content != null) 12.dp else 0.dp,
+            start = 16.dp,
+            end = 16.dp,
         ),
         textAlign = TextAlign.Center,
         text = message,

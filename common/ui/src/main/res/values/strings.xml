@@ -74,4 +74,5 @@
     <string name="fast_forward">Fast forward</string>
     <string name="next_track">Next track</string>
     <string name="unknown_media">Unknown media</string>
+    <string name="active_player">Active player</string>
 </resources>

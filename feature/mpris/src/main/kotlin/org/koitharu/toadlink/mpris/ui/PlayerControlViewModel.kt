@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlAction.PlayPause
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Prev
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Rewind
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Seek
+import org.koitharu.toadlink.mpris.ui.PlayerControlAction.SelectPlayer
 import org.koitharu.toadlink.mpris.ui.PlayerControlEffect.OnError
 import org.koitharu.toadlink.ui.mvi.MviViewModel
 import javax.inject.Inject
@@ -38,6 +40,7 @@ internal class PlayerControlViewModel @Inject constructor(
 
     private var intentJob: Job? = null
     private val isProcessing = MutableStateFlow(false)
+    private val currentPlayer = MutableStateFlow<String?>(null)
 
     private val client = connectionManager.activeConnection.mapLatest { connection ->
         if (connection == null) {
@@ -72,15 +75,17 @@ internal class PlayerControlViewModel @Inject constructor(
         intentJob = viewModelScope.launch {
             prevJob?.join()
             isProcessing.value = true
+            val player = currentPlayer.value
             try {
                 when (intent) {
-                    Next -> mpris.nextTrack()
-                    Pause -> mpris.pause()
-                    Play -> mpris.play()
-                    PlayPause -> mpris.playPause()
-                    Prev -> mpris.previousTrack()
-                    is Rewind -> mpris.fastForward(intent.delta)
-                    is Seek -> mpris.setPosition(intent.position)
+                    Next -> mpris.nextTrack(player)
+                    Pause -> mpris.pause(player)
+                    Play -> mpris.play(player)
+                    PlayPause -> mpris.playPause(player)
+                    Prev -> mpris.previousTrack(player)
+                    is Rewind -> mpris.fastForward(intent.delta, player)
+                    is Seek -> mpris.setPosition(intent.position, player)
+                    is SelectPlayer -> currentPlayer.value = intent.player
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -94,24 +99,31 @@ internal class PlayerControlViewModel @Inject constructor(
     }
 
     private suspend fun MPRISClient.observeAll() {
-        combine(
-            observeState(),
-            observeMetadata(),
-            isProcessing,
-        ) { state, metadata, processing ->
-            if (state == PlayerState.UNKNOWN && metadata == null) {
-                PlayerControlState.NotPlaying
-            } else {
-                PlayerControlState.Player(
-                    state = state,
-                    metadata = metadata,
-                    isLoading = processing,
-                )
-            }
+        currentPlayer.flatMapLatest { player ->
+            observePlayerState(player)
         }.catch { error ->
             emit(PlayerControlState.Error(error))
         }.collectLatest { newState ->
             state.value = newState
+        }
+    }
+
+    private fun MPRISClient.observePlayerState(player: String?) = combine(
+        observeState(player),
+        observeMetadata(player),
+        observeRunningPlayers(),
+        isProcessing,
+    ) { state, metadata, players, processing ->
+        if (state == PlayerState.UNKNOWN && metadata == null) {
+            PlayerControlState.NotPlaying
+        } else {
+            PlayerControlState.Player(
+                state = state,
+                metadata = metadata,
+                isLoading = processing,
+                players = players,
+                selectedPlayer = player ?: metadata?.playerName,
+            )
         }
     }
 }

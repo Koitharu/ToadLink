@@ -7,7 +7,7 @@ import okio.Sink
 import okio.Timeout
 
 internal class SCPSink(
-    private val connection: Connection,
+    private val cleint: Connection,
     private val path: String,
     private val append: Boolean,
 ) : Sink {

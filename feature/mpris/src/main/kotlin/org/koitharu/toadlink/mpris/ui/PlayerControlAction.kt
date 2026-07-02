@@ -15,4 +15,6 @@ sealed interface PlayerControlAction {
     data class Rewind(val delta: Int) : PlayerControlAction
 
     data class Seek(val position: Int) : PlayerControlAction
+
+    data class SelectPlayer(val player: String): PlayerControlAction
 }
