@@ -74,6 +74,14 @@ class DeviceEditorViewModel @AssistedInject constructor(
             it.copy(alias = intent.value)
         }
 
+        DeviceEditorIntent.ToggleAutoConnect -> state.update {
+            it.copy(autoConnect = !it.autoConnect)
+        }
+
+        is DeviceEditorIntent.UpdateKey -> state.update {
+            it.copy(key = intent.value)
+        }
+
         SaveDevice -> addDevice()
     }
 
@@ -93,6 +101,7 @@ class DeviceEditorViewModel @AssistedInject constructor(
                         port = snapshot.port,
                         username = snapshot.username,
                         password = snapshot.password,
+                        key = snapshot.key.trim(),
                     )
                 }
                 val data = DeviceDescriptor(
@@ -101,7 +110,10 @@ class DeviceEditorViewModel @AssistedInject constructor(
                     port = snapshot.port,
                     alias = snapshot.alias.trim().nullIfEmpty(),
                     username = snapshot.username,
-                    password = snapshot.password
+                    password = snapshot.password,
+                    key = snapshot.key.trim().nullIfEmpty(),
+                    lastConnect = null,
+                    connectAutomatically = snapshot.autoConnect,
                 )
                 storage.store(data)
             }.onSuccess { deviceId ->

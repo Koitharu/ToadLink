@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -48,9 +49,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.ApplyCompletion
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnCmdlineChanged
+import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnRequireConfirmationClick
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.Save
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.composables.SwitchButton
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.theme.ToadLinkTheme
@@ -89,7 +92,7 @@ fun ActionEditorScreen(
 @Composable
 private fun ActionEditorContent(
     state: ActionEditorState,
-    snackbarHostState: SnackbarHostState,
+        snackbarHostState: SnackbarHostState,
     handleIntent: MviIntentHandler<ActionEditorIntent>,
 ) = Scaffold(
     modifier = Modifier.imePadding(),
@@ -158,6 +161,16 @@ private fun ActionEditorContent(
                 state = state,
                 keyboardController = keyboardController,
                 handleIntent = handleIntent,
+            )
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+            SwitchButton(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                text = stringResource(R.string.ask_before_run),
+                checked = state.isConfirmationRequired,
+                enabled = !state.isLoading,
+                onClick = { handleIntent(OnRequireConfirmationClick) },
             )
             Spacer(
                 modifier = Modifier
@@ -245,6 +258,7 @@ private fun PreviewActionEditor() = ToadLinkTheme {
             name = "Reboot",
             cmdline = TextFieldValue("systemctl reboot"),
             cmdlineCompletion = persistentListOf(),
+            isConfirmationRequired = true,
             isLoading = false,
         ),
         handleIntent = MviIntentHandler.NoOp,

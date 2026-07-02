@@ -20,6 +20,7 @@ import org.koitharu.toadlink.actions.ui.editor.ActionEditorEffect.OnError
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.ApplyCompletion
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnCmdlineChanged
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnNameChanged
+import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnRequireConfirmationClick
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.Save
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.client.getCmdCompletion
@@ -60,6 +61,10 @@ internal class ActionEditorViewModel @AssistedInject constructor(
             it.copy(name = intent.value)
         }
 
+        OnRequireConfirmationClick -> state.update {
+            it.copy(isConfirmationRequired = !it.isConfirmationRequired)
+        }
+
         Save -> save()
     }
 
@@ -88,6 +93,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
                     id = state.value.actionId,
                     name = state.value.name,
                     cmdline = state.value.cmdline.text,
+                    isConfirmationRequired = state.value.isConfirmationRequired,
                 )
                 repository.store(action, deviceId = device.id)
             }.onFailure { error ->

@@ -1,6 +1,7 @@
 package org.koitharu.toadlink.core
 
 import androidx.compose.runtime.Immutable
+import kotlinx.datetime.LocalDateTime
 
 @Immutable
 data class DeviceDescriptor(
@@ -10,6 +11,9 @@ data class DeviceDescriptor(
     val alias: String?,
     val username: String,
     val password: String,
+    val key: String?,
+    val lastConnect: LocalDateTime?,
+    val connectAutomatically: Boolean,
 ) {
 
     val address = "$hostname:$port"

@@ -1,14 +1,12 @@
 package org.koitharu.toadlink.editor
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +22,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
@@ -34,9 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -54,15 +49,18 @@ import org.koitharu.toadlink.core.util.toIntLenient
 import org.koitharu.toadlink.editor.DeviceEditorEffect.Back
 import org.koitharu.toadlink.editor.DeviceEditorEffect.OnError
 import org.koitharu.toadlink.editor.DeviceEditorEffect.OpenDevice
+import org.koitharu.toadlink.editor.DeviceEditorIntent.ToggleAutoConnect
 import org.koitharu.toadlink.editor.DeviceEditorIntent.ToggleConnectNow
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateAlias
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateHostname
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateKey
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePassword
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePort
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateUsername
 import org.koitharu.toadlink.nav.ControlDestination
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.BackNavigationIcon
+import org.koitharu.toadlink.ui.composables.SwitchButton
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.util.getDisplayMessage
@@ -255,7 +253,19 @@ private fun AddDeviceContent(
                                 )
                             )
                         }
-                    },
+                    }
+                )
+
+                TextField(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    value = state.key,
+                    onValueChange = { handleIntent(UpdateKey(it)) },
+                    label = { Text(stringResource(R.string.private_key)) },
+                    enabled = !state.isLoading,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Ascii,
+                        imeAction = ImeAction.Next,
+                    ),
                 )
 
                 Text(
@@ -277,30 +287,27 @@ private fun AddDeviceContent(
                         imeAction = ImeAction.Done,
                     ),
                 )
-
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(R.string.connect_automatically),
+                    checked = state.autoConnect,
+                    enabled = !state.isLoading,
+                    onClick = { handleIntent(ToggleAutoConnect) },
+                )
                 if (state.isNewDevice) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 54.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .padding(top = 4.dp)
-                            .clickable(
-                                onClick = { handleIntent(ToggleConnectNow) }
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .weight(1f),
-                            text = stringResource(R.string.connect_now),
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                        Switch(
-                            checked = state.connectNow,
-                            onCheckedChange = null,
-                        )
-                    }
+                    Spacer(
+                        modifier = Modifier.height(4.dp)
+                    )
+                    SwitchButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.connect_now),
+                        checked = state.connectNow,
+                        enabled = !state.isLoading,
+                        onClick = { handleIntent(ToggleConnectNow) },
+                    )
                 }
             }
         }

@@ -4,7 +4,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import org.koitharu.toadlink.core.DeviceDescriptor
+import kotlin.time.Instant
 
 @Entity(
     tableName = "devices",
@@ -20,6 +24,9 @@ internal data class DeviceEntity(
     @ColumnInfo("alias") val alias: String?,
     @ColumnInfo("username") val username: String,
     @ColumnInfo("password") val password: String,
+    @ColumnInfo("key") val key: String?,
+    @ColumnInfo("last_connect") val lastConnect: Long,
+    @ColumnInfo("auto_connect") val connectAutomatically: Boolean,
 ) {
 
     constructor(descriptor: DeviceDescriptor) : this(
@@ -28,7 +35,10 @@ internal data class DeviceEntity(
         port = descriptor.port,
         alias = descriptor.alias,
         username = descriptor.username,
-        password = descriptor.password
+        password = descriptor.password,
+        lastConnect = descriptor.lastConnect?.toInstant(TimeZone.UTC)?.toEpochMilliseconds() ?: 0L,
+        key = descriptor.key,
+        connectAutomatically = descriptor.connectAutomatically,
     )
 
     fun toDeviceDescriptor() = DeviceDescriptor(
@@ -37,6 +47,13 @@ internal data class DeviceEntity(
         port = port,
         alias = alias,
         username = username,
-        password = password
+        password = password,
+        lastConnect = if (lastConnect == 0L) {
+            null
+        } else {
+            Instant.fromEpochMilliseconds(lastConnect).toLocalDateTime(TimeZone.UTC)
+        },
+        key = key,
+        connectAutomatically = connectAutomatically,
     )
 }

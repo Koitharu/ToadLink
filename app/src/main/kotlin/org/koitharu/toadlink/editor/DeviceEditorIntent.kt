@@ -10,9 +10,13 @@ sealed interface DeviceEditorIntent {
 
     data class UpdatePassword(val value: String) : DeviceEditorIntent
 
+    data class UpdateKey(val value: String) : DeviceEditorIntent
+
     data class UpdateAlias(val value: String) : DeviceEditorIntent
 
     data object ToggleConnectNow : DeviceEditorIntent
+
+    data object ToggleAutoConnect : DeviceEditorIntent
 
     data object SaveDevice : DeviceEditorIntent
 }

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "afd76a3481a76de0faab58bc068a7261",
+    "identityHash": "4c86eac4442b94c5cf5f1f995105cb03",
     "entities": [
       {
         "tableName": "devices",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `hostname` TEXT NOT NULL, `port` INTEGER NOT NULL, `alias` TEXT, `username` TEXT NOT NULL, `password` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `hostname` TEXT NOT NULL, `port` INTEGER NOT NULL, `alias` TEXT, `username` TEXT NOT NULL, `password` TEXT NOT NULL, `key` TEXT, `last_connect` INTEGER NOT NULL, `auto_connect` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -42,6 +42,23 @@
             "columnName": "password",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "key",
+            "columnName": "key",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastConnect",
+            "columnName": "last_connect",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "connectAutomatically",
+            "columnName": "auto_connect",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -75,7 +92,7 @@
       },
       {
         "tableName": "actions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `device_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `cmdline` TEXT NOT NULL, FOREIGN KEY(`device_id`) REFERENCES `devices`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `device_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `cmdline` TEXT NOT NULL, `confirm` INTEGER NOT NULL, FOREIGN KEY(`device_id`) REFERENCES `devices`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -99,6 +116,12 @@
             "fieldPath": "cmdline",
             "columnName": "cmdline",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isConfirmationRequired",
+            "columnName": "confirm",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -145,7 +168,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'afd76a3481a76de0faab58bc068a7261')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4c86eac4442b94c5cf5f1f995105cb03')"
     ]
   }
 }

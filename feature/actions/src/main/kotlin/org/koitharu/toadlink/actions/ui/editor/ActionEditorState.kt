@@ -11,6 +11,7 @@ internal data class ActionEditorState(
     val actionId: Int,
     val name: String,
     val cmdline: TextFieldValue,
+    val isConfirmationRequired: Boolean,
     val cmdlineCompletion: ImmutableList<String>,
     val isLoading: Boolean,
 ) {
@@ -23,6 +24,7 @@ internal data class ActionEditorState(
         name = action?.name.orEmpty(),
         cmdline = TextFieldValue(action?.cmdline.orEmpty()),
         cmdlineCompletion = persistentListOf(),
+        isConfirmationRequired = action?.isConfirmationRequired ?: false,
         isLoading = false,
     )
 }

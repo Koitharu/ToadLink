@@ -18,8 +18,10 @@ data class DeviceEditorState(
     @field:StringRes
     val usernameError: Int,
     val password: String,
+    val key: String,
     val alias: String,
     val connectNow: Boolean,
+    val autoConnect: Boolean,
 ) {
 
     constructor(device: DeviceDescriptor) : this(
@@ -29,11 +31,13 @@ data class DeviceEditorState(
         port = device.port,
         username = device.username,
         password = device.password,
+        key = device.key.orEmpty(),
         hostnameError = 0,
         portError = 0,
         usernameError = 0,
         alias = device.alias.orEmpty(),
         connectNow = false,
+        autoConnect = device.connectAutomatically,
     )
 
     constructor(initialAddress: String?, isNewDevice: Boolean) : this(
@@ -43,11 +47,13 @@ data class DeviceEditorState(
         port = initialAddress?.substringAfterLast(':', "")?.toIntOrNull() ?: 22,
         username = "",
         password = "",
+        key = "",
         hostnameError = 0,
         portError = 0,
         usernameError = 0,
         alias = "",
         connectNow = true,
+        autoConnect = false,
     )
 
     fun hasErrors() = portError != 0 || hostnameError != 0 || usernameError != 0

@@ -55,7 +55,13 @@ class SshConnectionManager(
                 observeConnection(sshConnection)
                 runInterruptible(Dispatchers.IO) {
                     connection.connect()
-                    connection.authenticateWithPassword(
+                    deviceDescriptor.key?.let { key ->
+                        connection.authenticateWithPublicKey(
+                            deviceDescriptor.username,
+                            key.toCharArray(),
+                            deviceDescriptor.password
+                        )
+                    } ?: connection.authenticateWithPassword(
                         deviceDescriptor.username,
                         deviceDescriptor.password
                     )
@@ -96,10 +102,15 @@ class SshConnectionManager(
             port: Int,
             username: String,
             password: String,
+            key: String?,
         ) = runInterruptible(Dispatchers.IO) {
             Connection(hostname, port).use { connection ->
                 connection.connect()
-                connection.authenticateWithPassword(username, password)
+                if (key.isNullOrEmpty()) {
+                    connection.authenticateWithPassword(username, password)
+                } else {
+                    connection.authenticateWithPublicKey(username, key.toCharArray(), password)
+                }
                 connection.ping()
             }
         }

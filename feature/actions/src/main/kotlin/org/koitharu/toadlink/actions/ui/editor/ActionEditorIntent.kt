@@ -16,5 +16,7 @@ internal sealed interface ActionEditorIntent {
         val value: String,
     ) : ActionEditorIntent
 
+    data object OnRequireConfirmationClick : ActionEditorIntent
+
     data object Save : ActionEditorIntent
 }

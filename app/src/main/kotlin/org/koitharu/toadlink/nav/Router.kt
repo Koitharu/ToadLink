@@ -12,7 +12,7 @@ import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.nav.Router
 import java.io.File
 
-class RouterImpl(
+internal class RouterImpl(
     private val backStack: NavBackStack<NavKey>,
     private val context: Context,
 ) : Router, MutableList<NavKey> by backStack {

@@ -23,6 +23,7 @@ internal data class RemoteActionEntity(
     @ColumnInfo(name = "device_id", index = true) val deviceId: Int,
     @ColumnInfo("name") val name: String,
     @ColumnInfo("cmdline") val cmdline: String,
+    @ColumnInfo("confirm") val isConfirmationRequired: Boolean,
 ) {
 
     constructor(action: RemoteAction, deviceId: Int) : this(
@@ -30,11 +31,13 @@ internal data class RemoteActionEntity(
         name = action.name,
         cmdline = action.cmdline,
         deviceId = deviceId,
+        isConfirmationRequired = action.isConfirmationRequired,
     )
 
     fun toRemoteAction() = RemoteAction(
         id = id,
         name = name,
         cmdline = cmdline,
+        isConfirmationRequired = isConfirmationRequired
     )
 }

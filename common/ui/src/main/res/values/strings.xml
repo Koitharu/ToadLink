@@ -66,4 +66,7 @@
     <string name="rename_file">Rename file</string>
     <string name="file_name">File name</string>
     <string name="rename_file_message">Please enter a new name for the file \"%s\":</string>
+    <string name="action_run_confirmation">Do you want to execute action this action?</string>
+    <string name="ask_before_run">Ask before run</string>
+    <string name="connect_automatically">Connect automatically</string>
 </resources>

@@ -41,6 +41,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.NetworkDevice
 import org.koitharu.toadlink.editor.AddDeviceDestination
@@ -53,6 +55,8 @@ import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.util.getDisplayMessage
 import org.koitharu.toadlink.ui.util.themeAttributeSize
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 
 @Composable
 fun FindDeviceScreen() {
@@ -329,7 +333,10 @@ private fun FindDevicePreview() {
                     port = 22,
                     alias = "Laptop",
                     username = "",
-                    password = ""
+                    password = "",
+                    key = null,
+                    lastConnect = (Clock.System.now() - 10.hours).toLocalDateTime(TimeZone.UTC),
+                    connectAutomatically = false,
                 ),
                 DeviceDescriptor(
                     id = 2,
@@ -337,7 +344,10 @@ private fun FindDevicePreview() {
                     port = 22,
                     alias = null,
                     username = "",
-                    password = ""
+                    password = "",
+                    key = null,
+                    lastConnect = null,
+                    connectAutomatically = false,
                 )
             ),
             availableDevices = persistentListOf(

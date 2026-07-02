@@ -139,6 +139,14 @@ private fun ActionRow(
     handleIntent: MviIntentHandler<ActionsIntent>,
 ) {
     var isMenuExpanded by remember { mutableStateOf(false) }
+    var isConfirmationVisible by remember { mutableStateOf(false) }
+    if (isConfirmationVisible) {
+        RunConfirmationDialog(
+            action = item.action,
+            onDismissRequest = { isConfirmationVisible = false },
+            onConfirm = { handleIntent(Execute(item.action)) }
+        )
+    }
     Surface(
         modifier = Modifier
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
@@ -193,7 +201,13 @@ private fun ActionRow(
                 }
             }
             IconButton(
-                onClick = { handleIntent(Execute(item.action)) },
+                onClick = {
+                    if (item.action.isConfirmationRequired) {
+                        isConfirmationVisible = true
+                    } else {
+                        handleIntent(Execute(item.action))
+                    }
+                },
                 enabled = item.state != ExecutionState.Running,
             ) {
                 AnimatedContent(item.state == ExecutionState.Running) { isRunning ->
@@ -239,13 +253,9 @@ private fun ActionMenu(
 ) {
     val router = LocalRouter.current
     DropdownMenuItem(
-        text = { Text(stringResource(R.string.execute)) },
-        onClick = { handleIntent(Execute(actionItem.action)) },
-        enabled = actionItem.state != ExecutionState.Running,
-    )
-    DropdownMenuItem(
         text = { Text(stringResource(R.string.edit_action)) },
         onClick = { router.add(ActionEditorDestination(actionItem.action)) },
+        enabled = actionItem.state != ExecutionState.Running,
     )
 }
 
@@ -300,10 +310,10 @@ private fun PreviewActionsList() = MaterialTheme {
         contentPadding = PaddingValues.Zero,
         state = ActionsState(
             actions = persistentListOf(
-                ActionItem(RemoteAction(1, "Shutdown", "stub"), ExecutionState.None),
-                ActionItem(RemoteAction(2, "Reboot", "stub"), ExecutionState.Running),
+                ActionItem(RemoteAction(1, "Shutdown", "stub", false), ExecutionState.None),
+                ActionItem(RemoteAction(2, "Reboot", "stub", false), ExecutionState.Running),
                 ActionItem(
-                    action = RemoteAction(3, "Failed action", "stub"),
+                    action = RemoteAction(3, "Failed action", "stub", false),
                     state = ExecutionState.Failed(
                         RemoteProcessException(
                             1,
@@ -312,7 +322,7 @@ private fun PreviewActionsList() = MaterialTheme {
                     )
                 ),
                 ActionItem(
-                    action = RemoteAction(4, "Success action", "stub"),
+                    action = RemoteAction(4, "Success action", "stub", false),
                     state = ExecutionState.Success(LoremIpsum(12).values.joinToString(" ")),
                 ),
             ),
