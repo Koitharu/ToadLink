@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
@@ -50,6 +49,7 @@ import org.koitharu.toadlink.finddevice.FindDeviceEffect.OnError
 import org.koitharu.toadlink.nav.ControlDestination
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.DotIndicator
+import org.koitharu.toadlink.ui.composables.IconButtonWithTooltip
 import org.koitharu.toadlink.ui.composables.ListHeader
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
@@ -301,8 +301,9 @@ private fun DeviceItem(
                 )
             }
             Box {
-                IconButton(
+                IconButtonWithTooltip(
                     onClick = { isMenuExpanded = true },
+                    tooltip = stringResource(R.string.menu),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_menu),

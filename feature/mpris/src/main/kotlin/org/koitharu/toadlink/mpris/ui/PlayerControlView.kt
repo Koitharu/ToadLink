@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -32,9 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,7 +47,9 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Next
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Prev
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Rewind
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Seek
+import org.koitharu.toadlink.ui.composables.IconButtonWithTooltip
 import kotlin.math.roundToInt
+import org.koitharu.toadlink.ui.R as CR
 
 @Composable
 fun PlayerControlView(
@@ -65,7 +66,9 @@ fun PlayerControlView(
     verticalArrangement = Arrangement.Center,
     horizontalAlignment = Alignment.CenterHorizontally,
 ) {
-    val coverPlaceholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainer)
+    val coverPlaceholder = coverPlaceholderPainter(
+        iconSize = 84.dp
+    )
     AsyncImage(
         modifier = Modifier
             .size(260.dp)
@@ -80,7 +83,9 @@ fun PlayerControlView(
         fallback = coverPlaceholder,
     )
     Text(
-        text = metadata?.title.orEmpty(),
+        text = metadata?.title.orEmpty().ifEmpty {
+            stringResource(CR.string.unknown_media)
+        },
         modifier = Modifier.padding(top = 8.dp),
         style = MaterialTheme.typography.titleLarge,
         textAlign = TextAlign.Center,
@@ -160,15 +165,23 @@ private fun ButtonBar(
     horizontalArrangement = Arrangement.SpaceAround,
     verticalAlignment = Alignment.CenterVertically,
 ) {
-    IconButton(
+    IconButtonWithTooltip(
         onClick = { handleAction(Prev) },
+        tooltip = stringResource(CR.string.previous_track)
     ) {
-        Icon(painterResource(R.drawable.ic_skip_previous), "previous")
+        Icon(
+            painter = painterResource(id = R.drawable.ic_skip_previous),
+            contentDescription = stringResource(CR.string.previous_track)
+        )
     }
-    IconButton(
+    IconButtonWithTooltip(
         onClick = { handleAction(Rewind(-10)) },
+        tooltip = stringResource(CR.string.rewind)
     ) {
-        Icon(painterResource(R.drawable.ic_fast_rewind), "skip_10")
+        Icon(
+            painter = painterResource(id = R.drawable.ic_fast_rewind),
+            contentDescription = stringResource(CR.string.rewind)
+        )
     }
     Spacer(modifier = Modifier.width(16.dp))
     FilledTonalIconButton(
@@ -207,15 +220,23 @@ private fun ButtonBar(
         }
     }
     Spacer(modifier = Modifier.width(16.dp))
-    IconButton(
+    IconButtonWithTooltip(
         onClick = { handleAction(Rewind(10)) },
+        tooltip = stringResource(CR.string.fast_forward),
     ) {
-        Icon(painterResource(R.drawable.ic_fast_forward), "skip_10")
+        Icon(
+            painter = painterResource(id = R.drawable.ic_fast_forward),
+            contentDescription = stringResource(CR.string.fast_forward)
+        )
     }
-    IconButton(
+    IconButtonWithTooltip(
         onClick = { handleAction(Next) },
+        tooltip = stringResource(CR.string.next_track),
     ) {
-        Icon(painterResource(R.drawable.ic_skip_next), "next")
+        Icon(
+            painter = painterResource(R.drawable.ic_skip_next),
+            contentDescription = stringResource(CR.string.next_track)
+        )
     }
 }
 

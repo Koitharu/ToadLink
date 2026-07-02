@@ -7,29 +7,23 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults.rememberTooltipPositionProvider
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,13 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koitharu.toadlink.actions.ui.list.ActionsContent
@@ -54,6 +48,9 @@ import org.koitharu.toadlink.files.FileManagerContent
 import org.koitharu.toadlink.mpris.ui.PlayerControlContent
 import org.koitharu.toadlink.nav.FindDeviceDestination
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.composables.DotIndicator
+import org.koitharu.toadlink.ui.composables.ErrorState
+import org.koitharu.toadlink.ui.composables.IconButtonWithTooltip
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.nav.rememberPermissionCheck
 import kotlin.time.Clock
@@ -94,11 +91,23 @@ private fun ControlContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = state.device?.displayName ?: stringResource(R.string.app_name),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        DotIndicator(
+                            color = when (state) {
+                                is ControlState.Connected -> colorResource(R.color.toad)
+                                is ControlState.Connecting -> MaterialTheme.colorScheme.surfaceDim
+                                is ControlState.Error -> MaterialTheme.colorScheme.error
+                            }
+                        )
+                        Text(
+                            text = state.device?.displayName ?: stringResource(R.string.app_name),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 },
                 subtitle = {
                     state.device?.let { device ->
@@ -114,20 +123,16 @@ private fun ControlContent(
                 ),
                 actions = {
                     val router = LocalRouter.current
-                    TooltipBox(
-                        positionProvider = rememberTooltipPositionProvider(
-                            TooltipAnchorPosition.Above
-                        ),
-                        tooltip = { PlainTooltip { Text(stringResource(R.string.select_device)) } },
-                        state = rememberTooltipState(),
+                    IconButtonWithTooltip(
+                        onClick = { router.changeRoot(FindDeviceDestination) },
+                        tooltip = stringResource(R.string.select_device),
                     ) {
-                        IconButton(onClick = { router.changeRoot(FindDeviceDestination) }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_drop_down),
-                                contentDescription = stringResource(R.string.select_device),
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(R.drawable.ic_list),
+                            contentDescription = stringResource(R.string.select_device),
+                        )
                     }
+                    ControlScreenMenu()
                 },
 
                 )
@@ -188,16 +193,9 @@ private fun ControlContent(
                 modifier = Modifier.padding(contentPadding)
             )
 
-            is ControlState.Error -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-            ) {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = state.error.message ?: stringResource(R.string.error_generic)
-                )
-            }
+            is ControlState.Error -> ErrorState(
+                error = state.error,
+            )
         }
     }
 }

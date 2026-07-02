@@ -15,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -47,6 +46,7 @@ import org.koitharu.toadlink.client.RemoteProcessException
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.EmptyState
+import org.koitharu.toadlink.ui.composables.IconButtonWithTooltip
 import org.koitharu.toadlink.ui.mvi.MviIntentHandler
 import org.koitharu.toadlink.ui.nav.LocalRouter
 import org.koitharu.toadlink.ui.util.displayMessage
@@ -151,7 +151,6 @@ private fun ActionRow(
         modifier = Modifier
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
-        onClick = { isMenuExpanded = true }
     ) {
         Row(
             modifier = Modifier
@@ -200,7 +199,7 @@ private fun ActionRow(
                     )
                 }
             }
-            IconButton(
+            IconButtonWithTooltip(
                 onClick = {
                     if (item.action.isConfirmationRequired) {
                         isConfirmationVisible = true
@@ -208,6 +207,7 @@ private fun ActionRow(
                         handleIntent(Execute(item.action))
                     }
                 },
+                tooltip = stringResource(R.string.execute),
                 enabled = item.state != ExecutionState.Running,
             ) {
                 AnimatedContent(item.state == ExecutionState.Running) { isRunning ->
@@ -222,8 +222,9 @@ private fun ActionRow(
                 }
             }
             Box {
-                IconButton(
+                IconButtonWithTooltip(
                     onClick = { isMenuExpanded = true },
+                    tooltip = stringResource(R.string.menu)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_menu),

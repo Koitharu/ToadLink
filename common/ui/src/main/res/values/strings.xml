@@ -69,4 +69,9 @@
     <string name="action_run_confirmation">Do you want to execute action this action?</string>
     <string name="ask_before_run">Ask before run</string>
     <string name="connect_automatically">Connect automatically</string>
+    <string name="previous_track">Previous track</string>
+    <string name="rewind">Rewind</string>
+    <string name="fast_forward">Fast forward</string>
+    <string name="next_track">Next track</string>
+    <string name="unknown_media">Unknown media</string>
 </resources>

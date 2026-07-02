@@ -6,14 +6,13 @@ import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import androidx.core.app.PendingIntentCompat
-import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import coil3.toBitmap
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.koitharu.toadlink.core.util.runCatchingCancellable
+import org.koitharu.toadlink.ui.R
 import java.util.concurrent.TimeUnit
 
 
@@ -44,6 +43,12 @@ class MediaSessionHelper(
 //        val audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_NONE)
 //            .build()
         mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS)
+        mediaSession.setPlaybackToRemote(
+            MPRISVolumeProvider(
+                scope = coroutineScope,
+                client = client,
+            )
+        )
         mediaSession.setCallback(this)
         context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
             mediaSession.setSessionActivity(
@@ -73,7 +78,9 @@ class MediaSessionHelper(
                 ).image?.toBitmap()
         }
         metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, coverArt);
-        metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, metadata.title)
+        metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, metadata.title.ifEmpty {
+            context.getString(R.string.unknown_media)
+        })
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM, metadata.album)
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, metadata.artist)
         metadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, metadata.length * 1000L)

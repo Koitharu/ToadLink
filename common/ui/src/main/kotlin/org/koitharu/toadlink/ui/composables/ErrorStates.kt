@@ -18,12 +18,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.koitharu.toadlink.ui.R
+import org.koitharu.toadlink.ui.util.displayMessage
+import org.koitharu.toadlink.ui.util.icon
 
 @Composable
-fun EmptyState(
-    modifier: Modifier,
+fun ErrorState(
+    modifier: Modifier = Modifier,
     message: String,
-    icon: Painter = painterResource(R.drawable.ic_hidden),
+    icon: Painter = painterResource(R.drawable.ic_error),
     content: (@Composable () -> Unit)? = null,
 ) = Column(
     modifier = Modifier
@@ -52,13 +54,18 @@ fun EmptyState(
 }
 
 @Composable
-fun UnsupportedFunctionalityState() {
-    TODO()
-}
+fun ErrorState(
+    modifier: Modifier = Modifier,
+    error: Throwable,
+) = ErrorState(
+    modifier = modifier,
+    message = error.displayMessage(),
+    icon = error.icon(),
+)
 
-@Preview
 @Composable
-private fun EmptyStatePreview() = EmptyState(
+@Preview
+private fun ErrorStatePreview() = ErrorState(
     modifier = Modifier.fillMaxSize(),
-    message = "Nothing here",
+    message = "Error occurred",
 )

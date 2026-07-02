@@ -1,5 +1,6 @@
 package org.koitharu.toadlink.mpris
 
+import androidx.annotation.FloatRange
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -44,13 +45,13 @@ class MPRISClient(
         if (seconds < 0) {
             rewind(seconds.absoluteValue)
         } else {
-            connection.execute("playerctl position +$seconds")
+            connection.execute("playerctl position $seconds+")
         }
     }
 
     suspend fun rewind(seconds: Int = 10) {
-        require(seconds > 0) { "Cannot rewind be $seconds seconds" }
-        connection.execute("playerctl position -$seconds")
+        require(seconds > 0) { "Cannot rewind by $seconds seconds" }
+        connection.execute("playerctl position $seconds-")
     }
 
     suspend fun setPosition(seconds: Int) {
@@ -73,6 +74,23 @@ class MPRISClient(
     suspend fun getPlayerStatus(): PlayerState {
         val rawValue = connection.execute("playerctl status")
         return parseState(rawValue)
+    }
+
+    suspend fun adjustVolume(delta: Float) {
+        val deltaString = when {
+            delta < 0 -> "${delta.absoluteValue}-"
+            delta > 0 -> "$delta+"
+            else -> return
+        }
+        connection.execute("playerctl volume $deltaString")
+    }
+
+    suspend fun setVolume(@FloatRange(from = 0.0, to = 1.0) volume: Float) {
+        connection.execute("playerctl volume $volume")
+    }
+
+    suspend fun getCurrentVolume(): Float {
+        return connection.execute("playerctl volume").toFloat()
     }
 
     fun observeState(): Flow<PlayerState> {
