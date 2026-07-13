@@ -49,6 +49,7 @@ android {
 dependencies {
     implementation(project(":common:core"))
     implementation(project(":common:ui"))
+    implementation(project(":common:storage"))
     implementation(project(":common:ssh-client"))
     implementation(project(":common:settings"))
 

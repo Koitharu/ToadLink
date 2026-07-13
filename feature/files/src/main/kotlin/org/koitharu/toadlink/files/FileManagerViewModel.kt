@@ -39,7 +39,7 @@ import org.koitharu.toadlink.files.FileManagerIntent.SaveFile
 import org.koitharu.toadlink.files.FileManagerIntent.ShareFile
 import org.koitharu.toadlink.files.FileManagerIntent.TransferFileIntent
 import org.koitharu.toadlink.files.data.LocalFileCache
-import org.koitharu.toadlink.files.data.SshFileManager
+import org.koitharu.toadlink.files.data.SshFileManager.Companion.fileManager
 import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.settings.AppSettings
 import org.koitharu.toadlink.ui.mvi.MviViewModel
@@ -56,7 +56,7 @@ internal class FileManagerViewModel @AssistedInject constructor(
 ) {
 
     private val fileManager = connectionManager.observeConnection(host).map {
-        it?.let { SshFileManager(it) }
+        it?.fileManager
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private var loadJob: Job = viewModelScope.launch(Dispatchers.Default) {

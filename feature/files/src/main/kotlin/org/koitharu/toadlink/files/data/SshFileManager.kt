@@ -20,8 +20,9 @@ import org.koitharu.toadlink.files.fs.SshFile
 import java.text.SimpleDateFormat
 import java.util.EnumMap
 import java.util.Locale
+import java.util.WeakHashMap
 
-class SshFileManager(
+class SshFileManager private constructor(
     private val connection: SshConnection,
 ) {
 
@@ -77,6 +78,33 @@ class SshFileManager(
             }.toPersistentList()
     }
 
+    suspend fun getFileInfo(path: Path): SshFile {
+        val command = buildString {
+            append("ls -lQk1Ad --time-style=long-iso --time=mtime ")
+            append(path.toString().escape())
+        }
+        val userDirs = xdgUserDirs.getOrNull().orEmpty()
+        return connection.execute(command)
+            .parseFile(path, userDirs)
+            ?: error("Unable to parse file info")
+    }
+
+    suspend fun getRecentlyUsed(limit: Int): List<SshFile> = coroutineScope {
+        connection.execute("sed -nr 's/.*href=\"file:\\/\\/([^\"]*)\".*/\\/\\1/p' ~/.local/share/recently-used.xbel | tail -n $limit")
+            .lines()
+            .map { it.removePrefix("/").toPath(normalize = true) }
+            .map {
+                async {
+                    runCatchingCancellable {
+                        getFileInfo(it)
+                    }.onFailure { e ->
+                        e.printStackTrace()
+                    }.getOrNull()
+                }
+            }.awaitAll()
+            .filterNotNull()
+    }
+
     private fun String.parseFile(parentPath: Path, userDirs: Map<Path, XdgUserDir>): SshFile? {
         val parts = splitByWhitespace()
         if (parts.size < 8) {
@@ -116,5 +144,25 @@ class SshFileManager(
                 path?.let { it to xdgUserDir }
             }
         }.awaitAll().filterNotNull().toMap()
+    }
+
+    companion object {
+
+        private val instances = WeakHashMap<SshConnection, SshFileManager>()
+
+        val SshConnection.fileManager: SshFileManager
+            get() {
+                instances[this]?.let {
+                    return it
+                }
+                synchronized(this) {
+                    instances[this]?.let {
+                        return it
+                    }
+                    return SshFileManager(this).also {
+                        instances[this] = it
+                    }
+                }
+            }
     }
 }

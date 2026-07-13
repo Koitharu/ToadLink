@@ -2,8 +2,7 @@ package org.koitharu.toadlink
 
 import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.coroutineScope
-import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -42,12 +41,10 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
         }.build()
 
     private fun observeConnection() {
-        val lifecycle = ProcessLifecycleOwner.get().lifecycle
-        lifecycle.coroutineScope.launch {
+        ProcessLifecycleOwner.get().lifecycleScope.launch {
             connectionManager.connections
                 .map { it.isNotEmpty() }
                 .distinctUntilChanged()
-                .flowWithLifecycle(lifecycle)
                 .collect { hasConnections ->
                     if (hasConnections) {
                         ConnectionService.start(this@ToadApp)

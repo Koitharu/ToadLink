@@ -21,6 +21,12 @@ value class MimeType(private val value: String) {
 
     override fun toString(): String = value
 
+    fun toAndroidString() = if (this == DIRECTORY) {
+        "vnd.android.document/directory"
+    } else {
+        toString()
+    }
+
     val isImage: Boolean
         get() = type == TYPE_IMAGE
 

@@ -10,6 +10,9 @@ import org.koitharu.toadlink.storage.entity.DeviceEntity
 internal abstract class DevicesDao {
 
     @Query("SELECT * FROM devices ORDER BY id")
+    abstract suspend fun findAll(): List<DeviceEntity>
+
+    @Query("SELECT * FROM devices ORDER BY id")
     abstract fun observeAll(): Flow<List<DeviceEntity>>
 
     @Query("SELECT * FROM devices WHERE id = :id")

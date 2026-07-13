@@ -18,6 +18,10 @@ class DevicesRepository @Inject internal constructor(
 
     suspend fun delete(id: Int) = db.devicesDao.delete(id)
 
+    suspend fun getAll(): ImmutableList<DeviceDescriptor> = db.devicesDao.findAll().map {
+        it.toDeviceDescriptor()
+    }.toImmutableList()
+
     fun observeAll(): Flow<ImmutableList<DeviceDescriptor>> = db.devicesDao.observeAll()
         .map { it.map { x -> x.toDeviceDescriptor() }.toImmutableList() }
 
