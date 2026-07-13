@@ -24,9 +24,16 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import org.koitharu.toadlink.client.SshConnection
 import org.koitharu.toadlink.client.SshConnectionManager
@@ -35,7 +42,6 @@ import org.koitharu.toadlink.mpris.MPRISClient
 import org.koitharu.toadlink.mpris.MediaSessionHelper
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.nav.AppIntentFactory
-import org.koitharu.toadlink.ui.util.checkNotificationPermission
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -52,6 +58,7 @@ class ConnectionService : LifecycleService() {
 
     private lateinit var broadcastReceiver: BroadcastReceiver
     private var mediaListenerJob: Job? = null
+    private var connectionsJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -79,43 +86,20 @@ class ConnectionService : LifecycleService() {
     @SuppressLint("InlinedApi")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        val deviceId = intent?.getIntExtra(ARG_DEVICE_ID, 0) ?: 0
-        if (deviceId == 0) {
+        val connections = connectionManager.connections.value
+        if (connections.isEmpty()) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        val device = connectionManager.activeConnection.value?.host
-        if (device == null || device.id != deviceId) {
-            stopSelf(startId)
-            return START_NOT_STICKY
-        }
-        val notification = createServiceNotification(device)
+        val notification = createServiceNotification(connections.values.first().host)
         ServiceCompat.startForeground(
             this,
-            deviceId,
+            connections.values.first().host.id,
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
         )
-        lifecycleScope.launch {
-            connectionManager.activeConnection.collect { connection ->
-                if (connection == null || connection.host.id != deviceId) {
-                    stopSelf(startId)
-                } else if (checkNotificationPermission()) {
-                    notificationManager.notify(
-                        deviceId,
-                        createServiceNotification(connection.host)
-                    )
-                }
-            }
-        }
-        mediaListenerJob?.cancel()
-        mediaListenerJob = lifecycleScope.launch {
-            connectionManager.activeConnection.collectLatest { connection ->
-                if (connection != null) {
-                    handleMediaSession(connection)
-                }
-            }
-        }
+        connectionsJob?.cancel()
+        connectionsJob = observeConnections()
         return START_NOT_STICKY
     }
 
@@ -124,12 +108,43 @@ class ConnectionService : LifecycleService() {
         super.onDestroy()
     }
 
+    private fun observeConnections() = lifecycleScope.launch(Dispatchers.Default) {
+        val onNewConnection = flow {
+            val accumulator = HashSet<DeviceDescriptor>()
+            connectionManager.connections.collect { items ->
+                val connections = items.values.filterNot {
+                    it.host in accumulator
+                }.forEach {
+                    emit(it)
+                }
+                accumulator.addAll(items.keys)
+            }
+        }.shareIn(this, SharingStarted.Lazily)
+        launch {
+            onNewConnection.collect {
+                it.launch(Dispatchers.Main) {
+                    handleMediaSession(it)
+                }
+                it.launch {
+                    try {
+                        notificationManager.notify(
+                            it.host.id, createServiceNotification(it.host)
+                        )
+                        awaitCancellation()
+                    } finally {
+                        notificationManager.cancel(it.host.id)
+                    }
+                }
+            }
+        }
+    }
+
     private fun handleBroadcast(intent: Intent) {
         when (intent.action) {
             ACTION_DISCONNECT -> {
                 val deviceId = intent.data?.schemeSpecificPart?.toIntOrNull() ?: return
-                if (connectionManager.activeConnection.value?.host?.id == deviceId) {
-                    connectionManager.disconnect()
+                lifecycleScope.launch(Dispatchers.Default) {
+                    connectionManager.disconnect(deviceId)
                 }
             }
         }
@@ -145,15 +160,16 @@ class ConnectionService : LifecycleService() {
                     mprisClient.observeMetadata(),
                     mprisClient.observeState(),
                     ::Pair,
-                ).collectLatest { (metadata, state) ->
-                    if (metadata != null) {
-                        val mediaSession = mediaSessionHelper.getMediaSession(metadata, state)
-                        val notification = createMediaNotification(mediaSession)
-                        notificationManager.notify(TAG_MEDIA, notificationId, notification)
-                    } else {
-                        notificationManager.cancel(TAG_MEDIA, notificationId)
+                ).flowOn(Dispatchers.Default)
+                    .collectLatest { (metadata, state) ->
+                        if (metadata != null) {
+                            val mediaSession = mediaSessionHelper.getMediaSession(metadata, state)
+                            val notification = createMediaNotification(mediaSession)
+                            notificationManager.notify(TAG_MEDIA, notificationId, notification)
+                        } else {
+                            notificationManager.cancel(TAG_MEDIA, notificationId)
+                        }
                     }
-                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -170,6 +186,7 @@ class ConnectionService : LifecycleService() {
         builder.setContentTitle(getString(R.string.connected_to_s, device.displayName))
         builder.setSmallIcon(R.drawable.ic_stat_device)
         builder.setSilent(true)
+        builder.setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         builder.setPriority(PRIORITY_MIN)
         builder.setContentIntent(
             PendingIntentCompat.getActivity(
@@ -236,14 +253,17 @@ class ConnectionService : LifecycleService() {
 
         private const val CHANNEL_ID_MAIN = "connection"
         private const val CHANNEL_ID_MEDIA = "mpris"
-        private const val ARG_DEVICE_ID = "device_id"
         private const val ACTION_DISCONNECT = "org.koitharu.toadlink.ACTION_DISCONNECT"
         private const val TAG_MEDIA = "mpris_media"
 
-        fun start(context: Context, deviceId: Int) {
+        fun start(context: Context) {
             val intent = Intent(context, ConnectionService::class.java)
-            intent.putExtra(ARG_DEVICE_ID, deviceId)
             ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun stop(context: Context) {
+            val intent = Intent(context, ConnectionService::class.java)
+            context.stopService(intent)
         }
     }
 }

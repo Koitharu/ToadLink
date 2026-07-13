@@ -1,6 +1,9 @@
 package org.koitharu.toadlink.mpris.ui
 
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.koitharu.toadlink.client.SshConnectionManager
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.mpris.MPRISClient
 import org.koitharu.toadlink.mpris.PlayerState
@@ -29,10 +33,10 @@ import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Seek
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.SelectPlayer
 import org.koitharu.toadlink.mpris.ui.PlayerControlEffect.OnError
 import org.koitharu.toadlink.ui.mvi.MviViewModel
-import javax.inject.Inject
 
-@HiltViewModel
-internal class PlayerControlViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = PlayerControlViewModel.Factory::class)
+internal class PlayerControlViewModel @AssistedInject constructor(
+    @Assisted host: DeviceDescriptor,
     connectionManager: SshConnectionManager,
 ) : MviViewModel<PlayerControlState, PlayerControlAction, PlayerControlEffect>(
     initialState = PlayerControlState.Loading
@@ -42,7 +46,7 @@ internal class PlayerControlViewModel @Inject constructor(
     private val isProcessing = MutableStateFlow(false)
     private val currentPlayer = MutableStateFlow<String?>(null)
 
-    private val client = connectionManager.activeConnection.mapLatest { connection ->
+    private val client = connectionManager.observeConnection(host).mapLatest { connection ->
         if (connection == null) {
             null
         } else {
@@ -72,7 +76,7 @@ internal class PlayerControlViewModel @Inject constructor(
     override fun handleIntent(intent: PlayerControlAction) {
         val mpris = client.value ?: return
         val prevJob = intentJob
-        intentJob = viewModelScope.launch {
+        intentJob = viewModelScope.launch(Dispatchers.Default) {
             prevJob?.join()
             isProcessing.value = true
             val player = currentPlayer.value
@@ -125,5 +129,11 @@ internal class PlayerControlViewModel @Inject constructor(
                 selectedPlayer = player ?: metadata?.playerName,
             )
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+
+        fun create(host: DeviceDescriptor): PlayerControlViewModel
     }
 }

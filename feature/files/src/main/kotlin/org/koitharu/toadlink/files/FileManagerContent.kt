@@ -38,10 +38,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import okio.Path.Companion.toPath
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.files.FileManagerEffect.OnError
 import org.koitharu.toadlink.files.FileManagerEffect.OnFileSaved
 import org.koitharu.toadlink.files.FileManagerEffect.OpenExternal
@@ -61,10 +59,13 @@ import org.koitharu.toadlink.files.R as featureR
 
 @Composable
 fun FileManagerContent(
+    host: DeviceDescriptor,
     contentPadding: PaddingValues,
     snackbarHostState: SnackbarHostState,
 ) {
-    val viewModel = hiltViewModel<FileManagerViewModel>()
+    val viewModel = hiltViewModel<FileManagerViewModel, FileManagerViewModel.Factory> {
+        it.create(host)
+    }
     val state by viewModel.collectState()
     val context = LocalContext.current
     val router = LocalRouter.current
@@ -260,61 +261,79 @@ private fun Header(
 
 @Composable
 @Preview
-private fun PreviewFilesList() = FilesList(
-    state = FileManagerState(
-        path = "/home/user".toPath(),
-        files = persistentListOf(
-            SshFile(
-                path = "/home/user/Documents".toPath(),
-                size = 14304,
-                lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
-                owner = "user",
-                symlinkTarget = null,
-                type = MimeType.DIRECTORY,
-                xdgUserDir = XdgUserDir.DOCUMENTS,
+private fun PreviewFilesList() {
+    val host = DeviceDescriptor(
+        id = 1,
+        hostname = "192.168.8.77",
+        port = 22,
+        alias = null,
+        username = "user",
+        password = "passw",
+        key = null,
+        lastConnect = null,
+        connectAutomatically = false,
+    )
+    FilesList(
+        state = FileManagerState(
+            path = "/home/user".toPath(),
+            files = persistentListOf(
+                SshFile(
+                    host = host,
+                    path = "/home/user/Documents".toPath(),
+                    size = 14304,
+                    lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                    owner = "user",
+                    symlinkTarget = null,
+                    type = MimeType.DIRECTORY,
+                    xdgUserDir = XdgUserDir.DOCUMENTS,
+                ),
+                SshFile(
+                    host = host,
+                    path = "/home/user/Downloads".toPath(),
+                    size = 14304,
+                    lastModified = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1),
+                    owner = "user",
+                    symlinkTarget = null,
+                    type = MimeType.DIRECTORY,
+                    xdgUserDir = XdgUserDir.DOWNLOAD,
+                ),
+                SshFile(
+                    host = host,
+                    path = "/home/user/Music".toPath(),
+                    size = 3000,
+                    lastModified = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(10),
+                    owner = "user",
+                    symlinkTarget = null,
+                    type = MimeType.DIRECTORY,
+                    xdgUserDir = XdgUserDir.MUSIC,
+                ),
+                SshFile(
+                    host = host,
+                    path = "/home/user/file.txt".toPath(),
+                    size = 403,
+                    lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),
+                    owner = "user",
+                    symlinkTarget = null,
+                    type = MimeType("text/plain"),
+                    xdgUserDir = null,
+                ),
+                SshFile(
+                    host = host,
+                    path = "/home/user/symlink".toPath(),
+                    size = 403,
+                    lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),
+                    owner = "user",
+                    symlinkTarget = "/var/log/log.txt",
+                    type = MimeType.UNKNOWN,
+                    xdgUserDir = null,
+                ),
             ),
-            SshFile(
-                path = "/home/user/Downloads".toPath(),
-                size = 14304,
-                lastModified = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1),
-                owner = "user",
-                symlinkTarget = null,
-                type = MimeType.DIRECTORY,
-                xdgUserDir = XdgUserDir.DOWNLOAD,
-            ),
-            SshFile(
-                path = "/home/user/Music".toPath(),
-                size = 3000,
-                lastModified = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(10),
-                owner = "user",
-                symlinkTarget = null,
-                type = MimeType.DIRECTORY,
-                xdgUserDir = XdgUserDir.MUSIC,
-            ),
-            SshFile(
-                path = "/home/user/file.txt".toPath(),
-                size = 403,
-                lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),
-                owner = "user",
-                symlinkTarget = null,
-                type = MimeType("text/plain"),
-                xdgUserDir = null,
-            ),
-            SshFile(
-                path = "/home/user/symlink".toPath(),
-                size = 403,
-                lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),
-                owner = "user",
-                symlinkTarget = "/var/log/log.txt",
-                type = MimeType.UNKNOWN,
-                xdgUserDir = null,
-            ),
+            isLoading = true,
+            loadingFile = null,
+            showThumbnails = false,
+            gridView = true,
         ),
-        isLoading = true,
-        loadingFile = null,
-        showThumbnails = false,
-        gridView = true,
-    ),
-    contentPadding = PaddingValues.Zero,
-    handleIntent = MviIntentHandler.NoOp,
-)
+        contentPadding = PaddingValues.Zero,
+        handleIntent = MviIntentHandler.NoOp,
+    )
+}

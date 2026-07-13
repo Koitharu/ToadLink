@@ -51,6 +51,7 @@ import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.ApplyCompletio
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnCmdlineChanged
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnRequireConfirmationClick
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.Save
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.SwitchButton
@@ -61,10 +62,11 @@ import org.koitharu.toadlink.ui.util.getDisplayMessage
 
 @Composable
 fun ActionEditorScreen(
+    host: DeviceDescriptor,
     action: RemoteAction?,
 ) {
     val viewModel = hiltViewModel<ActionEditorViewModel, ActionEditorViewModel.Factory> {
-        it.create(action)
+        it.create(host, action)
     }
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.collectState()

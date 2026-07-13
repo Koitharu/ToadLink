@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import org.koitharu.toadlink.client.RemoteProcessException
+import org.koitharu.toadlink.client.exceptions.RemoteProcessException
 import org.koitharu.toadlink.client.SshConnection
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.util.logErrors

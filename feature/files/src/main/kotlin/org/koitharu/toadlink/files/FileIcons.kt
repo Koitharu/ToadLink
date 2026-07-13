@@ -8,6 +8,8 @@ import org.koitharu.toadlink.files.fs.SshFile
 internal fun fileIcon(file: SshFile) = when {
     file.isDirectory -> dirIcon(file.xdgUserDir)
     file.type.isImage -> R.drawable.ic_file_image
+    file.type.isAudio -> R.drawable.ic_file_audio
+    file.type.isArchive -> R.drawable.ic_file_zip
     else -> R.drawable.ic_file_any
 }
 
@@ -17,6 +19,7 @@ private fun dirIcon(userDir: XdgUserDir?) = when (userDir) {
     XdgUserDir.MUSIC -> R.drawable.ic_dir_music
     XdgUserDir.DOCUMENTS -> R.drawable.ic_dir_documents
     XdgUserDir.TEMPLATES,
+    XdgUserDir.PROJECTS,
     XdgUserDir.PUBLICSHARE, // TODO
     XdgUserDir.PICTURES, // TODO
     XdgUserDir.VIDEOS, // TODO

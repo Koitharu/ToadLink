@@ -1,16 +1,16 @@
 package org.koitharu.toadlink.core.util
 
-fun String.nullIfEmpty() = ifEmpty { null }
+public fun String.nullIfEmpty(): String? = ifEmpty { null }
 
-fun String.lineCount(): Int {
+public fun String.lineCount(): Int {
     return count { x -> x == '\n' }
 }
 
-fun String.toIntLenient(): Int = filter { it.isDigit() }.toIntOrNull() ?: 0
+public fun String.toIntLenient(): Int = filter { it.isDigit() }.toIntOrNull() ?: 0
 
-fun <C: CharSequence> C.nullIfEmpty(): C? = ifEmpty { null }
+public fun <C: CharSequence> C.nullIfEmpty(): C? = ifEmpty { null }
 
-fun Int.formatTimeSeconds(): String {
+public fun Int.formatTimeSeconds(): String {
     if (this == 0) {
         return "00:00"
     }
@@ -27,12 +27,12 @@ fun Int.formatTimeSeconds(): String {
 
 private val SPLIT_REGEX = Regex("""(?<!\\)(?=\s)(?=(?:[^"]*"[^"]*")*[^"]*$)""")
 
-fun String.splitByWhitespace(): List<String> = split(SPLIT_REGEX)
+public fun String.splitByWhitespace(): List<String> = split(SPLIT_REGEX)
     .mapNotNull { group -> group.trim().takeUnless { it.isEmpty() } }
 
 private val OCTAL_REGEX = Regex("""\\([0-7]{1,3})""")
 
-fun String.unescape(): String {
+public fun String.unescape(): String {
     val bytes = ArrayList<Byte>(3)
     val sb = StringBuilder(length)
     var lastIndex = 0
@@ -54,7 +54,7 @@ fun String.unescape(): String {
     return sb.toString()
 }
 
-fun String.escape(): String {
+public fun String.escape(): String {
     if (isEmpty()) {
         return this
     }

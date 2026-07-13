@@ -5,6 +5,7 @@ enum class XdgUserDir {
     DOWNLOAD,
     TEMPLATES,
     PUBLICSHARE,
+    PROJECTS,
     DOCUMENTS,
     MUSIC,
     PICTURES,

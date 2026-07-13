@@ -87,6 +87,7 @@ class SshFileManager(
         val path = parentPath.resolve(name)
         val isDirectory = parts[0].firstOrNull() == 'd'
         return SshFile(
+            host = connection.host,
             path = path,
             size = parts[4].toLong(),
             lastModified = dateFormat.parse(dateString)?.time ?: 0L,

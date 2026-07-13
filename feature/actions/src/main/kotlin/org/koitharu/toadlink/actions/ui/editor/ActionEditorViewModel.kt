@@ -24,6 +24,7 @@ import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.OnRequireConfi
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorIntent.Save
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.client.getCmdCompletion
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.storage.RemoteActionsRepository
@@ -32,6 +33,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = ActionEditorViewModel.Factory::class)
 internal class ActionEditorViewModel @AssistedInject constructor(
+    @Assisted private val host: DeviceDescriptor,
     @Assisted action: RemoteAction?,
     private val repository: RemoteActionsRepository,
     private val connectionManager: SshConnectionManager,
@@ -87,7 +89,6 @@ internal class ActionEditorViewModel @AssistedInject constructor(
     fun save() {
         viewModelScope.launch(Dispatchers.Default) {
             state.update { it.copy(isLoading = true) }
-            val device = connectionManager.awaitConnection().host
             runCatchingCancellable {
                 val action = RemoteAction(
                     id = state.value.actionId,
@@ -95,7 +96,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
                     cmdline = state.value.cmdline.text,
                     isConfirmationRequired = state.value.isConfirmationRequired,
                 )
-                repository.store(action, deviceId = device.id)
+                repository.store(action, deviceId = host.id)
             }.onFailure { error ->
                 sendEffect(OnError(error))
             }.onSuccess {
@@ -115,7 +116,7 @@ internal class ActionEditorViewModel @AssistedInject constructor(
 
     private suspend fun getCompletion(cmdline: String) = if (cmdline.length > 3) {
         runCatchingCancellable {
-            connectionManager.activeConnection.value?.getCmdCompletion(cmdline)
+            connectionManager.peekConnection(host.id)?.getCmdCompletion(cmdline)
         }.getOrNull() ?: persistentListOf()
     } else {
         persistentListOf()
@@ -124,6 +125,6 @@ internal class ActionEditorViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
 
-        fun create(action: RemoteAction?): ActionEditorViewModel
+        fun create(host: DeviceDescriptor, action: RemoteAction?): ActionEditorViewModel
     }
 }

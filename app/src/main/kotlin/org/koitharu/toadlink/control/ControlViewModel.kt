@@ -33,14 +33,14 @@ class ControlViewModel @AssistedInject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val device = runCatchingCancellable {
                 val device = devicesRepository.get(deviceId)
-                connectionManager.connect(device).await().getOrThrow()
+                connectionManager.getConnection(device)
                 device
             }.onSuccess { device ->
                 state.value = Connected(device, ControlSection.ACTIONS)
             }.onFailure { error ->
                 state.value = ControlState.Error(null, error)
             }.getOrNull() ?: return@launch
-            connectionManager.activeConnection.first { it == null }
+            connectionManager.connections.first { x -> x.keys.none { it.id == device.id } }
             sendEffect(ControlEffect.CloseScreen)
         }
     }

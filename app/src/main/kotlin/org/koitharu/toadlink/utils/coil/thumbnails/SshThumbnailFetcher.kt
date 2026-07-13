@@ -28,11 +28,13 @@ class SshThumbnailFetcher(
     override suspend fun fetch(): FetchResult? {
         val mimeType = MimeTypeMap.getMimeTypeFromUrl(data.toString())?.toMimeTypeOrNull()
             ?: return null
-        val thumbnailers = registry.getThumbnailers(mimeType)
+        val connection = connectionManager.peekConnection(
+            host = data.authority ?: return null
+        ) ?: return null
+        val thumbnailers = registry.getThumbnailers(connection, mimeType)
         if (thumbnailers.isEmpty()) {
             return null
         }
-        val connection = connectionManager.awaitConnection()
         return thumbnailers.firstNotNullOfOrNull { thumbnailer ->
             fetchFromThumbnailer(connection, thumbnailer)?.let { source ->
                 SourceFetchResult(
@@ -64,7 +66,7 @@ class SshThumbnailFetcher(
         private val connectionManager: SshConnectionManager,
     ) : Fetcher.Factory<Uri> {
 
-        private val registry = ThumbnailersRegistry(connectionManager)
+        private val registry = ThumbnailersRegistry()
 
         override fun create(
             data: Uri,

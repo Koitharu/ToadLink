@@ -1,27 +1,26 @@
 package org.koitharu.toadlink.client.fs
 
+import kotlinx.coroutines.runBlocking
 import okio.FileHandle
 import okio.FileMetadata
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import okio.Sink
 import okio.Source
-import org.koitharu.toadlink.client.SshConnectionImpl
+import org.koitharu.toadlink.client.PooledSshConnection
 import org.koitharu.toadlink.client.executeBlocking
 import org.koitharu.toadlink.core.util.escape
+import org.koitharu.toadlink.core.util.recoverCatchingCancellable
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.core.util.splitByWhitespace
 import org.koitharu.toadlink.core.util.unescape
 
 internal class SshFileSystem(
-    private val connection: SshConnectionImpl,
+    private val connection: PooledSshConnection,
 ) : FileSystem() {
 
-    override fun appendingSink(file: Path, mustExist: Boolean) = SCPSink(
-        connection = connection.connection,
-        path = file.escaped(),
-        append = true
-    )
+    override fun appendingSink(file: Path, mustExist: Boolean): Sink = TODO()
 
     override fun atomicMove(source: Path, target: Path) {
         connection.executeBlocking("mv --no-copy -f -T ${source.escaped()} ${target.escaped()}")
@@ -31,7 +30,7 @@ internal class SshFileSystem(
         val escapedPath = path.escaped()
         return runCatchingCancellable {
             connection.executeBlocking("realpath $escapedPath")
-        }.recoverCatching {
+        }.recoverCatchingCancellable {
             connection.executeBlocking("readlink -f $escapedPath")
         }.map {
             it.toPath(normalize = false)
@@ -89,13 +88,12 @@ internal class SshFileSystem(
         throw UnsupportedOperationException("Not supported for remote files")
     }
 
-    override fun sink(file: Path, mustCreate: Boolean) = SCPSink(
-        connection = connection.connection,
-        path = file.escaped(),
-        append = false
-    )
+    override fun sink(file: Path, mustCreate: Boolean) = TODO()
 
-    override fun source(file: Path): Source = SCPSource(connection.connection, file.escaped())
+    override fun source(file: Path): Source = SftpSource(
+        client = runBlocking { connection.getSftpClient() },
+        path = file.toString()
+    )
 
     override fun deleteRecursively(fileOrDirectory: Path, mustExist: Boolean) {
         delete(fileOrDirectory, mustExist, recursive = true)

@@ -41,6 +41,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import okio.Path.Companion.toPath
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.files.FileManagerIntent.DeleteFile
 import org.koitharu.toadlink.files.FileManagerIntent.RenameFile
 import org.koitharu.toadlink.files.FileManagerIntent.SaveFile
@@ -273,6 +274,17 @@ private fun RenameConfirmationDialog(
 @Composable
 fun DeleteDialogPreview() = DeleteConfirmationDialog(
     file = SshFile(
+        host = DeviceDescriptor(
+            id = 1,
+            hostname = "192.168.8.77",
+            port = 22,
+            alias = null,
+            username = "user",
+            password = "passw",
+            key = null,
+            lastConnect = null,
+            connectAutomatically = false,
+        ),
         path = "/home/user/file.txt".toPath(),
         size = 403,
         lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2),

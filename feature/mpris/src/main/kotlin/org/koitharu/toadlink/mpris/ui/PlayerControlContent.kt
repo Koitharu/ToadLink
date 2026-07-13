@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.SelectPlayer
 import org.koitharu.toadlink.mpris.ui.PlayerControlEffect.OnError
 import org.koitharu.toadlink.ui.R
@@ -36,10 +37,13 @@ import org.koitharu.toadlink.ui.util.getDisplayMessage
 
 @Composable
 fun PlayerControlContent(
+    host: DeviceDescriptor,
     contentPadding: PaddingValues,
     snackbarHostState: SnackbarHostState,
 ) {
-    val viewModel = hiltViewModel<PlayerControlViewModel>()
+    val viewModel = hiltViewModel<PlayerControlViewModel, PlayerControlViewModel.Factory> {
+        it.create(host)
+    }
     val state by viewModel.collectState()
     val context = LocalContext.current
     LaunchedEffect(Unit) {

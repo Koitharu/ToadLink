@@ -30,6 +30,7 @@ class DeviceEditorViewModel @AssistedInject constructor(
     @Assisted deviceId: Int,
     @Assisted initialAddress: String?,
     private val storage: DevicesRepository,
+    private val sshConnectionManager: SshConnectionManager,
 ) : MviViewModel<DeviceEditorState, DeviceEditorIntent, DeviceEditorEffect>(
     DeviceEditorState(initialAddress, deviceId == 0)
 ) {
@@ -95,15 +96,6 @@ class DeviceEditorViewModel @AssistedInject constructor(
                 it.copy(isLoading = true)
             }
             runCatchingCancellable {
-                if (snapshot.connectNow) {
-                    SshConnectionManager.testConnection(
-                        hostname = snapshot.hostname,
-                        port = snapshot.port,
-                        username = snapshot.username,
-                        password = snapshot.password,
-                        key = snapshot.key.trim(),
-                    )
-                }
                 val data = DeviceDescriptor(
                     id = 0,
                     hostname = snapshot.hostname,
@@ -115,6 +107,9 @@ class DeviceEditorViewModel @AssistedInject constructor(
                     lastConnect = null,
                     connectAutomatically = snapshot.autoConnect,
                 )
+                if (snapshot.connectNow) {
+                    sshConnectionManager.testConnection(data)
+                }
                 storage.store(data)
             }.onSuccess { deviceId ->
                 if (snapshot.isNewDevice && snapshot.connectNow) {

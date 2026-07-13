@@ -3,10 +3,10 @@ package org.koitharu.toadlink.core
 import androidx.compose.runtime.Immutable
 
 @Immutable
-sealed interface IpAddress : Comparable<IpAddress> {
+public sealed interface IpAddress : Comparable<IpAddress> {
 
     @Immutable
-    data class IPv4(
+    public data class IPv4(
         val b1: UByte,
         val b2: UByte,
         val b3: UByte,
@@ -29,9 +29,9 @@ sealed interface IpAddress : Comparable<IpAddress> {
         override fun toString(): String = "$b1.$b2.$b3.$b4"
     }
 
-    companion object {
+    public companion object {
 
-        fun parse(raw: String): IpAddress {
+        public fun parse(raw: String): IpAddress {
             val parts = raw.split('.')
             require(parts.size == 4) {
                 "Cannot parse IP address $raw"

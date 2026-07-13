@@ -1,19 +1,20 @@
 package org.koitharu.toadlink.client
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import okio.FileSystem
 import okio.Source
 import org.koitharu.toadlink.core.DeviceDescriptor
 
-interface SshConnection {
+public interface SshConnection : CoroutineScope {
 
-    val host: DeviceDescriptor
+    public val host: DeviceDescriptor
 
-    val fileSystem: FileSystem
+    public val fileSystem: FileSystem
 
-    suspend fun execute(cmdline: String): String
+    public suspend fun execute(cmdline: String): String
 
-    suspend fun executeAsSource(cmdline: String): Source
+    public suspend fun executeAsSource(cmdline: String): Source
 
-    fun executeContinuously(cmdline: String): Flow<String>
+    public fun executeContinuously(cmdline: String): Flow<String>
 }

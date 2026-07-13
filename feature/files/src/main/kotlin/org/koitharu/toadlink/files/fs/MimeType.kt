@@ -27,6 +27,12 @@ value class MimeType(private val value: String) {
     val isVideo: Boolean
         get() = type == TYPE_VIDEO
 
+    val isAudio: Boolean
+        get() = type == TYPE_AUDIO
+
+    val isArchive: Boolean
+        get() = type == TYPE_APPLICATION && subtype in SUBTYPES_ARCHIVE
+
     companion object {
 
         const val ANY = "*"
@@ -35,7 +41,7 @@ value class MimeType(private val value: String) {
         val UNKNOWN = MimeType("application/octet-stream")
 
         fun String.toMimeTypeOrNull(): MimeType? = if (REGEX_MIME.matches(this)) {
-            MimeType(lowercase())
+            MimeType(substringBefore(';').lowercase())
         } else {
             null
         }
@@ -48,7 +54,21 @@ value class MimeType(private val value: String) {
 
         private const val TYPE_IMAGE = "image"
         private const val TYPE_VIDEO = "video"
+        private const val TYPE_AUDIO = "audio"
+        private const val TYPE_FONT = "font"
+        private const val TYPE_TEXT = "text"
+        private const val TYPE_APPLICATION = "application"
         private val REGEX_MIME = Regex("^\\w+/([-+.\\w]+|\\*)$", RegexOption.IGNORE_CASE)
+        private val SUBTYPES_ARCHIVE = setOf(
+            "zip",
+            "vnd.rar",
+            "x-7z-compressed",
+            "x-tar",
+            "gzip",
+            "x-gzip",
+            "x-bzip",
+            "x-freearc",
+        )
 
         private fun getNormalizedExtension(name: String): String? = name
             .lowercase()

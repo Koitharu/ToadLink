@@ -50,7 +50,7 @@ fun MainNav(initialNavKey: NavKey?) {
                     FindDeviceScreen()
                 }
                 entry<ActionEditorDestination> {
-                    ActionEditorScreen(it.action)
+                    ActionEditorScreen(it.host, it.action)
                 }
                 entry<SettingsDestination> {
                     SettingsScreen()

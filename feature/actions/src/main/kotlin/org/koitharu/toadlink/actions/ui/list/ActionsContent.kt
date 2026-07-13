@@ -33,16 +33,18 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koitharu.toadlink.actions.ui.ExecutionState
 import org.koitharu.toadlink.actions.ui.editor.ActionEditorDestination
 import org.koitharu.toadlink.actions.ui.list.ActionsIntent.Execute
-import org.koitharu.toadlink.client.RemoteProcessException
+import org.koitharu.toadlink.actions.ui.list.preview.ActionListPreviewProvider
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.RemoteAction
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.EmptyState
@@ -55,10 +57,13 @@ import org.koitharu.toadlink.ui.util.themeAttributeSize
 
 @Composable
 fun ActionsContent(
+    device: DeviceDescriptor,
     contentPadding: PaddingValues,
     snackbarHostState: SnackbarHostState,
 ) {
-    val viewModel = hiltViewModel<ActionsViewModel>()
+    val viewModel = hiltViewModel<ActionsViewModel, ActionsViewModel.Factory> {
+        it.create(device)
+    }
     val state by viewModel.collectState()
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -93,6 +98,7 @@ private fun ActionsList(
     }
 
     state.actions.isEmpty() -> EmptyState(
+        host = state.host,
         modifier = Modifier.padding(contentPadding)
     )
 
@@ -110,13 +116,14 @@ private fun ActionsList(
             )
         }
         item {
-            AddButton()
+            AddButton(state.host)
         }
     }
 }
 
 @Composable
 private fun EmptyState(
+    host: DeviceDescriptor,
     modifier: Modifier,
 ) = EmptyState(
     modifier = Modifier
@@ -127,7 +134,7 @@ private fun EmptyState(
 ) {
     val router = LocalRouter.current
     Button(
-        onClick = { router.navigate(ActionEditorDestination(null)) }
+        onClick = { router.navigate(ActionEditorDestination(host, null)) }
     ) {
         Text(text = stringResource(R.string.add_action))
     }
@@ -184,12 +191,21 @@ private fun ActionRow(
                         color = MaterialTheme.colorScheme.error
                     )
 
-                    is ExecutionState.Success -> Text(
-                        modifier = Modifier.padding(top = 2.dp),
-                        text = item.state.result,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colorResource(R.color.green),
-                    )
+                    is ExecutionState.Success -> if (item.state.result.isEmpty()) {
+                        Text(
+                            modifier = Modifier.padding(top = 2.dp),
+                            text = stringResource(R.string.executed),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.surfaceDim,
+                        )
+                    } else {
+                        Text(
+                            modifier = Modifier.padding(top = 2.dp),
+                            text = item.state.result,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorResource(R.color.green),
+                        )
+                    }
 
                     else -> Text(
                         modifier = Modifier.padding(top = 2.dp),
@@ -255,20 +271,22 @@ private fun ActionMenu(
     val router = LocalRouter.current
     DropdownMenuItem(
         text = { Text(stringResource(R.string.edit_action)) },
-        onClick = { router.add(ActionEditorDestination(actionItem.action)) },
+        onClick = { router.add(ActionEditorDestination(actionItem.host, actionItem.action)) },
         enabled = actionItem.state != ExecutionState.Running,
     )
 }
 
 @Composable
-private fun AddButton() {
+private fun AddButton(
+    host: DeviceDescriptor,
+) {
     val router = LocalRouter.current
     Surface(
         modifier = Modifier
             .heightIn(min = themeAttributeSize(android.R.attr.listPreferredItemHeight))
             .fillMaxWidth(),
         onClick = {
-            router.navigate(ActionEditorDestination(null))
+            router.navigate(ActionEditorDestination(host, null))
         }
     ) {
         Row(
@@ -297,6 +315,17 @@ private fun PreviewEmptyList() = MaterialTheme {
     ActionsList(
         contentPadding = PaddingValues.Zero,
         state = ActionsState(
+            host = DeviceDescriptor(
+                id = 1,
+                hostname = "192.168.8.77",
+                port = 22,
+                alias = null,
+                username = "user",
+                password = "passw",
+                key = null,
+                lastConnect = null,
+                connectAutomatically = false,
+            ),
             actions = persistentListOf(),
             isLoading = false
         ),
@@ -306,27 +335,24 @@ private fun PreviewEmptyList() = MaterialTheme {
 
 @Preview
 @Composable
-private fun PreviewActionsList() = MaterialTheme {
+private fun PreviewActionsList(
+    @PreviewParameter(ActionListPreviewProvider::class) actions: PersistentList<ActionItem>,
+) = MaterialTheme {
     ActionsList(
         contentPadding = PaddingValues.Zero,
         state = ActionsState(
-            actions = persistentListOf(
-                ActionItem(RemoteAction(1, "Shutdown", "stub", false), ExecutionState.None),
-                ActionItem(RemoteAction(2, "Reboot", "stub", false), ExecutionState.Running),
-                ActionItem(
-                    action = RemoteAction(3, "Failed action", "stub", false),
-                    state = ExecutionState.Failed(
-                        RemoteProcessException(
-                            1,
-                            "No such file or directory"
-                        )
-                    )
-                ),
-                ActionItem(
-                    action = RemoteAction(4, "Success action", "stub", false),
-                    state = ExecutionState.Success(LoremIpsum(12).values.joinToString(" ")),
-                ),
+            host = DeviceDescriptor(
+                id = 1,
+                hostname = "192.168.8.77",
+                port = 22,
+                alias = null,
+                username = "user",
+                password = "passw",
+                key = null,
+                lastConnect = null,
+                connectAutomatically = false,
             ),
+            actions = actions,
             isLoading = false
         ),
         handleIntent = { /* no-op */ }

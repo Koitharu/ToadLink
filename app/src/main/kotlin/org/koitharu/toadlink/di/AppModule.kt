@@ -21,7 +21,7 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideSshConnectionManager() = SshConnectionManager(
+    fun provideSshManager() = SshConnectionManager(
         coroutineScope = ProcessLifecycleOwner.get().lifecycle.coroutineScope + Dispatchers.Default
     )
 

@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koitharu.toadlink.core.DeviceDescriptor
@@ -134,7 +135,7 @@ private fun FindDeviceContent(
                         ) {
                             DeviceItem(
                                 device = it,
-                                isConnected = it.id == state.connectedDevice,
+                                isConnected = it.id in state.connectedDevices,
                                 handleIntent = handleIntent
                             )
                         }
@@ -356,7 +357,7 @@ private fun FindDevicePreview() {
                 NetworkDevice("192.168.0.117", "PC1"),
             ),
             isScanning = true,
-            connectedDevice = 2,
+            connectedDevices = persistentSetOf(2),
         ),
         snackbarHostState = SnackbarHostState(),
         handleIntent = {}

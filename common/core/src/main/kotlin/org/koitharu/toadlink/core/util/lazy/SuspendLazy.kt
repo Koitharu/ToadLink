@@ -6,24 +6,24 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 internal typealias SuspendLazyInitializer<T> = suspend () -> T
 
-interface SuspendLazy<T> {
+public interface SuspendLazy<T> {
 
-    val isInitialized: Boolean
+    public val isInitialized: Boolean
 
-    suspend fun get(): T
+    public suspend fun get(): T
 
-    fun peek(): T?
+    public fun peek(): T?
 }
 
-suspend fun <T> SuspendLazy<T>.getOrNull(): T? = runCatchingCancellable {
+public suspend fun <T> SuspendLazy<T>.getOrNull(): T? = runCatchingCancellable {
     get()
 }.getOrNull()
 
-suspend fun <R, T : R> SuspendLazy<T>.getOrDefault(defaultValue: R): R = runCatchingCancellable {
+public suspend fun <R, T : R> SuspendLazy<T>.getOrDefault(defaultValue: R): R = runCatchingCancellable {
     get()
 }.getOrDefault(defaultValue)
 
-fun <T> suspendLazy(
+public fun <T> suspendLazy(
     context: CoroutineContext = EmptyCoroutineContext,
     initializer: SuspendLazyInitializer<T>,
 ): SuspendLazy<T> = SuspendLazyImpl(context, initializer)

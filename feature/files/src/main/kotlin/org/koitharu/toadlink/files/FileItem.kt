@@ -67,7 +67,7 @@ internal fun FileGridItem(
                 modifier = Modifier.aspectRatio(1f),
             ) {
                 val fileIcon = fileIcon(file)
-                if (!showThumbnail || file.isDirectory) {
+                if (!showThumbnail) {
                     Icon(
                         modifier = Modifier
                             .fillMaxSize()

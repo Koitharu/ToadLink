@@ -174,22 +174,26 @@ private fun ControlContent(
         when (state) {
             is ControlState.Connected -> when (state.section) {
                 ControlSection.ACTIONS -> ActionsContent(
+                    device = state.device,
                     contentPadding = contentPadding,
                     snackbarHostState = snackbarHostState,
                 )
 
                 ControlSection.MPRIS -> PlayerControlContent(
+                    host = state.device,
                     contentPadding = contentPadding,
                     snackbarHostState = snackbarHostState,
                 )
 
                 ControlSection.FILES -> FileManagerContent(
+                    host = state.device,
                     contentPadding = contentPadding,
                     snackbarHostState = snackbarHostState,
                 )
             }
 
             is ControlState.Connecting -> ConnectingState(
+                target = state.device?.displayName,
                 modifier = Modifier.padding(contentPadding)
             )
 
@@ -202,6 +206,7 @@ private fun ControlContent(
 
 @Composable
 private fun ConnectingState(
+    target: String?,
     modifier: Modifier = Modifier,
 ) = Column(
     modifier = Modifier
@@ -216,7 +221,11 @@ private fun ConnectingState(
             top = 16.dp,
             bottom = 12.dp,
         ),
-        text = stringResource(R.string.connecting_),
+        text = if (target.isNullOrEmpty()) {
+            stringResource(R.string.connecting_)
+        } else {
+            stringResource(R.string.connecting_to_, target)
+        },
         style = MaterialTheme.typography.titleMedium,
     )
     Button(
@@ -262,4 +271,4 @@ private fun PreviewControlContent() = ControlContent(
 
 @Preview
 @Composable
-private fun ConnectingStatePreview() = ConnectingState()
+private fun ConnectingStatePreview() = ConnectingState(null)

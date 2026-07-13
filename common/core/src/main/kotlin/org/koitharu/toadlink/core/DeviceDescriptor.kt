@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDateTime
 
 @Immutable
-data class DeviceDescriptor(
+public data class DeviceDescriptor(
     val id: Int,
     val hostname: String,
     val port: Int,
@@ -16,7 +16,7 @@ data class DeviceDescriptor(
     val connectAutomatically: Boolean,
 ) {
 
-    val address = "$hostname:$port"
+    val address: String = "$hostname:$port"
 
     val displayName: String
         get() = alias ?: hostname

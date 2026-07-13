@@ -2,6 +2,9 @@ package org.koitharu.toadlink.files
 
 import android.content.ContentResolver
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CancellationException
@@ -19,6 +22,7 @@ import okio.FileNotFoundException
 import okio.Path
 import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.client.scp
+import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.util.firstNotNull
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.files.FileManagerEffect.OnError
@@ -39,10 +43,10 @@ import org.koitharu.toadlink.files.data.SshFileManager
 import org.koitharu.toadlink.files.fs.SshFile
 import org.koitharu.toadlink.settings.AppSettings
 import org.koitharu.toadlink.ui.mvi.MviViewModel
-import javax.inject.Inject
 
-@HiltViewModel
-internal class FileManagerViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = FileManagerViewModel.Factory::class)
+internal class FileManagerViewModel @AssistedInject constructor(
+    @Assisted host: DeviceDescriptor,
     private val connectionManager: SshConnectionManager,
     private val localFileCache: LocalFileCache,
     private val settings: AppSettings,
@@ -51,7 +55,7 @@ internal class FileManagerViewModel @Inject constructor(
     FileManagerState()
 ) {
 
-    private val fileManager = connectionManager.activeConnection.map {
+    private val fileManager = connectionManager.observeConnection(host).map {
         it?.let { SshFileManager(it) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -94,7 +98,7 @@ internal class FileManagerViewModel @Inject constructor(
             val file = intent.file
             state.update { it.copy(loadingFile = file.name) }
             try {
-                val connection = connectionManager.awaitConnection()
+                val connection = connectionManager.getConnection(file.host)
                 if (intent is SaveFile) {
                     contentResolver.openOutputStream(intent.target)?.use {
                         connection.scp(file.path, it)
@@ -121,7 +125,7 @@ internal class FileManagerViewModel @Inject constructor(
     private fun deleteFile(file: SshFile) {
         viewModelScope.launch(Dispatchers.Default) {
             runCatchingCancellable {
-                val connection = connectionManager.awaitConnection()
+                val connection = connectionManager.getConnection(file.host)
                 runInterruptible(Dispatchers.IO) {
                     connection.fileSystem.delete(file.path)
                 }
@@ -139,7 +143,7 @@ internal class FileManagerViewModel @Inject constructor(
     private fun renameFIle(file: SshFile, newName: String) {
         viewModelScope.launch(Dispatchers.Default) {
             runCatchingCancellable {
-                val connection = connectionManager.awaitConnection()
+                val connection = connectionManager.getConnection(file.host)
                 val targetPath = checkNotNull(file.parentPath) / newName
                 runInterruptible(Dispatchers.IO) {
                     connection.fileSystem.atomicMove(file.path, targetPath)
@@ -205,5 +209,11 @@ internal class FileManagerViewModel @Inject constructor(
                 state.update { it.copy(gridView = value) }
             }
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+
+        fun create(host: DeviceDescriptor): FileManagerViewModel
     }
 }

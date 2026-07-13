@@ -1,129 +1,86 @@
 package org.koitharu.toadlink.client
 
-import com.trilead.ssh2.Connection
-import com.trilead.ssh2.log.Logger
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.getAndUpdate
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runInterruptible
-import org.connectbot.sshlib.ConnectResult
-import org.connectbot.sshlib.SshClient
-import org.connectbot.sshlib.SshClientConfig
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.koitharu.toadlink.core.DeviceDescriptor
-import org.koitharu.toadlink.core.util.firstNotNull
-import org.koitharu.toadlink.core.util.runCatchingCancellable
+import java.util.logging.Logger
 
-class SshConnectionManager(
+public class SshConnectionManager(
     private val coroutineScope: CoroutineScope,
 ) {
 
-    init {
-        coroutineScope.launch {
-            try {
-                awaitCancellation()
-            } finally {
-                disconnect()
+    private val logger = Logger.getLogger("TSSH")
+    private val mutableConnections =
+        MutableStateFlow(persistentMapOf<DeviceDescriptor, PooledSshConnection>())
+    private val connectionMutex = Mutex()
+
+    public val connections: StateFlow<ImmutableMap<DeviceDescriptor, SshConnection>> =
+        mutableConnections.asStateFlow()
+
+    public fun observeConnection(host: DeviceDescriptor): Flow<SshConnection?> = connections.map {
+        it[host]
+    }.distinctUntilChanged()
+
+    public suspend fun getConnection(host: DeviceDescriptor): SshConnection =
+        connectionMutex.withLock {
+            mutableConnections.value[host]?.let {
+                return@withLock it
             }
+            val connection = PooledSshConnection(host, logger, coroutineScope)
+            mutableConnections.update { it.putting(host, connection) }
+            logger.info("Connected: ${host.displayName}")
+            connection
+        }
+
+    public fun peekConnection(host: String): SshConnection? {
+        return mutableConnections.value.entries.find { it.key.address == host }?.value
+    }
+
+    public fun peekConnection(deviceId: Int): SshConnection? {
+        return mutableConnections.value.entries.find { it.key.id == deviceId }?.value
+    }
+
+    public suspend fun disconnect(host: DeviceDescriptor) {
+        val connection = connectionMutex.withLock {
+            val snapshot = mutableConnections.value
+            val connection = snapshot[host] ?: return
+            mutableConnections.value = snapshot.removing(host)
+            connection
+        }
+        logger.info("Disconnected: ${host.displayName}")
+        withContext(NonCancellable) {
+            connection.close()
         }
     }
 
-    private val _activeConnection = MutableStateFlow<SshConnectionImpl?>(null)
-
-    val activeConnection: StateFlow<SshConnection?>
-        get() = _activeConnection.asStateFlow()
-
-    suspend fun awaitConnection(): SshConnection = _activeConnection.firstNotNull()
-
-    fun connect(
-        deviceDescriptor: DeviceDescriptor,
-    ): Deferred<Result<SshConnection>> {
-        activeConnection.value?.let {
-            if (it.host == deviceDescriptor) {
-                return CompletableDeferred(Result.success(it))
-            }
-        }
-        return coroutineScope.async {
-            runCatchingCancellable {
-                val config = SshClientConfig {
-                    host = deviceDescriptor.hostname
-                    port = deviceDescriptor.port
-                    preferPasswordAuth = deviceDescriptor.key == null
-                }
-                val client = SshClient(config)
-                val sshConnection = SshConnectionImpl(deviceDescriptor, client)
-                observeConnection(sshConnection)
-                when (val result = client.connect()) {
-                    ConnectResult.Success -> {
-                        client.authenticatePassword(deviceDescriptor.username, deviceDescriptor.password)
-                    }
-                    is ConnectResult.AlgorithmMismatch -> TODO()
-                    is ConnectResult.HostKeyRejected -> TODO()
-                    is ConnectResult.ProtocolError -> TODO()
-                    is ConnectResult.TransportError -> TODO()
-                }
-                _activeConnection.getAndUpdate { sshConnection }?.close()
-                sshConnection
-            }
+    public suspend fun disconnect(deviceId: Int) {
+        mutableConnections.value.keys.find {
+            it.id == deviceId
+        }?.let {
+            disconnect(it)
         }
     }
 
-    fun disconnect() {
-        _activeConnection.getAndUpdate { null }?.close()
-    }
-
-    fun disconnect(deviceId: Int) {
-        // TODO support multiple connections
-        if (_activeConnection.value?.host?.id == deviceId) {
-            disconnect()
-        }
-    }
-
-    private fun observeConnection(connection: SshConnectionImpl) = coroutineScope.launch {
-        connection.isConnected.collect { connected ->
-            if (!connected) {
-                _activeConnection.compareAndSet(connection, null)
-            }
-        }
-    }
-
-    companion object {
-
-        fun setLoggingEnabled(isEnabled: Boolean) {
-            Logger.enabled = isEnabled
-        }
-
-        suspend fun testConnection(
-            hostname: String,
-            port: Int,
-            username: String,
-            password: String,
-            key: String?,
-        ) = runInterruptible(Dispatchers.IO) {
-            Connection(hostname, port).use { connection ->
-                connection.connect()
-                if (key.isNullOrEmpty()) {
-                    connection.authenticateWithPassword(username, password)
-                } else {
-                    connection.authenticateWithPublicKey(username, key.toCharArray(), password)
-                }
-                connection.ping()
-            }
-        }
-
-        suspend fun getHostKey(
-            hostname: String,
-            port: Int,
-        ): ByteArray = runInterruptible(Dispatchers.IO) {
-            Connection(hostname, port).use { connection ->
-                connection.connect().serverHostKey
+    public suspend fun testConnection(host: DeviceDescriptor) {
+        val connection = DirectSshConnection(host, host.createClient(), logger, coroutineScope)
+        try {
+            connection.connect()
+            connection.ping()
+        } finally {
+            withContext(NonCancellable) {
+                connection.close()
             }
         }
     }

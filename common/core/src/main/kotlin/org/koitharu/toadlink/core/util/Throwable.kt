@@ -21,3 +21,13 @@ public inline fun <T, R> T.runCatchingCancellable(block: T.() -> R): Result<R> {
         Result.failure(e)
     }
 }
+
+public inline fun <R, T : R> Result<T>.recoverCatchingCancellable(transform: (exception: Throwable) -> R): Result<R> {
+    contract {
+        callsInPlace(transform, InvocationKind.AT_MOST_ONCE)
+    }
+    return when (val exception = exceptionOrNull()) {
+        null -> this
+        else -> runCatchingCancellable { transform(exception) }
+    }
+}

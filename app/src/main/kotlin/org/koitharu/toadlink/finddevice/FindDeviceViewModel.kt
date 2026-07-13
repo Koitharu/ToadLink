@@ -2,9 +2,11 @@ package org.koitharu.toadlink.finddevice
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
@@ -22,7 +24,7 @@ import javax.inject.Inject
 class FindDeviceViewModel @Inject constructor(
     private val networkScanner: NetworkScanner,
     private val devicesRepository: DevicesRepository,
-    private val connectionManager: SshConnectionManager,
+    private val sshConnectionManager: SshConnectionManager,
 ) : MviViewModel<FindDeviceState, FindDeviceIntent, FindDeviceEffect>(FindDeviceState()) {
 
     private var networkScanningJob: Job = scanLocalNetwork()
@@ -35,10 +37,12 @@ class FindDeviceViewModel @Inject constructor(
                 }
         }
         viewModelScope.launch(Dispatchers.Default) {
-            connectionManager.activeConnection.collect { connectedDevice ->
+            sshConnectionManager.connections.map {
+                it.keys.map { x -> x.id }.toImmutableSet()
+            }.collect { connectedDevices ->
                 state.update {
                     it.copy(
-                        connectedDevice = connectedDevice?.host?.id ?: 0
+                        connectedDevices = connectedDevices,
                     )
                 }
             }
@@ -53,14 +57,17 @@ class FindDeviceViewModel @Inject constructor(
                 }
             }
 
-            is Disconnect -> connectionManager.disconnect(intent.deviceId)
+            is Disconnect -> viewModelScope.launch(Dispatchers.Default) {
+                sshConnectionManager.disconnect(intent.deviceId)
+            }
+
             is Remove -> removeDevice(intent.deviceId)
         }
     }
 
     private fun removeDevice(deviceId: Int) {
         viewModelScope.launch(Dispatchers.Default) {
-            connectionManager.disconnect(deviceId)
+            sshConnectionManager.disconnect(deviceId)
             devicesRepository.delete(deviceId)
         }
     }

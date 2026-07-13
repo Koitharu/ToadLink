@@ -36,7 +36,7 @@ internal fun DevicePopupMenu(
         val router = LocalRouter.current
         if (isConnected) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.remove)) },
+                text = { Text(stringResource(R.string.disconnect)) },
                 onClick = {
                     onDismissRequest()
                     handleIntent(Disconnect(device.id))

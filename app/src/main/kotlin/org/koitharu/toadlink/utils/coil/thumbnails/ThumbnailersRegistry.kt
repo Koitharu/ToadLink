@@ -9,22 +9,18 @@ import okio.BufferedSource
 import okio.Path.Companion.toPath
 import okio.buffer
 import org.koitharu.toadlink.client.SshConnection
-import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.client.tryExecute
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.files.fs.MimeType
 import org.koitharu.toadlink.files.fs.MimeType.Companion.toMimeTypeOrNull
 
-class ThumbnailersRegistry(
-    private val connectionManager: SshConnectionManager,
-) {
+class ThumbnailersRegistry {
 
     private val fetchMutex = Mutex()
     private var thumbnailers: List<Thumbnailer>? = null
     private var deviceId: Int = 0
 
-    suspend fun getThumbnailers(mimeType: MimeType): List<Thumbnailer> {
-        val connection = connectionManager.awaitConnection()
+    suspend fun getThumbnailers(connection: SshConnection, mimeType: MimeType): List<Thumbnailer> {
         val list = fetchMutex.withLock {
             if (thumbnailers == null || deviceId != connection.host.id) {
                 thumbnailers = connection.fetchThumbnailers()

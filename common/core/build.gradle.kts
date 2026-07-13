@@ -15,6 +15,7 @@ kotlin {
         languageVersion = KotlinVersion.KOTLIN_2_3
         optIn.add("kotlin.contracts.ExperimentalContracts")
     }
+    explicitApi()
 }
 dependencies {
     api(libs.kotlinx.coroutines.core)

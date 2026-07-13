@@ -10,13 +10,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration
 
-fun tickerFlow(delay: Duration): Flow<Long> = channelFlow {
+public fun tickerFlow(delay: Duration): Flow<Long> = channelFlow {
     while (isActive && !trySend(System.currentTimeMillis()).isClosed) {
         delay(delay)
     }
 }
 
-fun <T> Flow<T>.chunked(size: Int): Flow<List<T>> = flow {
+public fun <T> Flow<T>.chunked(size: Int): Flow<List<T>> = flow {
     var accumulator = ArrayList<T>(size)
     collect { value ->
         accumulator.add(value)
@@ -27,9 +27,9 @@ fun <T> Flow<T>.chunked(size: Int): Flow<List<T>> = flow {
     }
 }
 
-suspend fun <T : Any> Flow<T?>.firstNotNull(): T = filterNotNull().first()
+public suspend fun <T : Any> Flow<T?>.firstNotNull(): T = filterNotNull().first()
 
-fun <T> Flow<T>.logErrors(): Flow<T> = catch { e ->
+public fun <T> Flow<T>.logErrors(): Flow<T> = catch { e ->
     e.printStackTrace()
     throw e
 }

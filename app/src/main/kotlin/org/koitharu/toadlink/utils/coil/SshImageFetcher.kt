@@ -21,7 +21,9 @@ class SshImageFetcher internal constructor(
 
     @OptIn(coil3.annotation.InternalCoilApi::class)
     override suspend fun fetch(): FetchResult? {
-        val connection = connectionManager.awaitConnection()
+        val connection = connectionManager.peekConnection(
+            data.authority ?: return null
+        ) ?: return null
         return SourceFetchResult(
             source = ImageSource(
                 file = (data.path ?: return null).toPath(normalize = true),
