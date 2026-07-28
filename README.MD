@@ -16,6 +16,12 @@ ToadLink is an Android application for remote control PC via SSH. No additional 
 |-------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
 
 
+### Contribute
+
+Pull requests are welcome
+
+[![Translation state](https://hosted.weblate.org/widget/toadlink/287x66-grey.png)](https://hosted.weblate.org/engage/toadlink/)
+
 ### License
 [![GNU GPLv3 Image](https://www.gnu.org/graphics/gplv3-127x51.png)](http://www.gnu.org/licenses/gpl-3.0.en.html)
 
