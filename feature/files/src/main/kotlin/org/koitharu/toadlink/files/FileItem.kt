@@ -80,7 +80,7 @@ internal fun FileGridItem(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(4.dp),
-                        model = file.uri,
+                        model = file.thumbnailUri,
                         contentDescription = null,
                         error = painterResource(fileIcon),
                         placeholder = painterResource(fileIcon)
@@ -147,7 +147,7 @@ internal fun FileListItem(
                 } else {
                     AsyncImage(
                         modifier = Modifier.size(24.dp),
-                        model = file.uri,
+                        model = file.thumbnailUri,
                         contentDescription = null,
                         error = painterResource(fileIcon),
                         placeholder = painterResource(fileIcon)

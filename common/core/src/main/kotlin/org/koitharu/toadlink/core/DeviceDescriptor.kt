@@ -11,7 +11,7 @@ public data class DeviceDescriptor(
     val alias: String?,
     val username: String,
     val password: String,
-    val key: String?,
+    val privateKey: String?,
     val lastConnect: LocalDateTime?,
     val connectAutomatically: Boolean,
 ) {

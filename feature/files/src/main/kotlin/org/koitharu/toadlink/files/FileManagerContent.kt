@@ -269,7 +269,7 @@ private fun PreviewFilesList() {
         alias = null,
         username = "user",
         password = "passw",
-        key = null,
+        privateKey = null,
         lastConnect = null,
         connectAutomatically = false,
     )

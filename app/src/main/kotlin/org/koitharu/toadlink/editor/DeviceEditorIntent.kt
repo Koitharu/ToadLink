@@ -1,5 +1,7 @@
 package org.koitharu.toadlink.editor
 
+import android.net.Uri
+
 sealed interface DeviceEditorIntent {
 
     data class UpdateHostname(val value: String) : DeviceEditorIntent
@@ -10,7 +12,9 @@ sealed interface DeviceEditorIntent {
 
     data class UpdatePassword(val value: String) : DeviceEditorIntent
 
-    data class UpdateKey(val value: String) : DeviceEditorIntent
+    data class UpdatePrivateKey(val value: String) : DeviceEditorIntent
+
+    data class LoadPrivateKey(val uri: Uri) : DeviceEditorIntent
 
     data class UpdateAlias(val value: String) : DeviceEditorIntent
 

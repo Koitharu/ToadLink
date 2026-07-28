@@ -260,7 +260,7 @@ private fun PreviewControlContent() = ControlContent(
             alias = null,
             username = "stub",
             password = "stub",
-            key = null,
+            privateKey = null,
             lastConnect = Clock.System.now().toLocalDateTime(TimeZone.UTC),
             connectAutomatically = false,
         )

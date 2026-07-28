@@ -22,7 +22,7 @@ value class MimeType(private val value: String) {
     override fun toString(): String = value
 
     fun toAndroidString() = if (this == DIRECTORY) {
-        "vnd.android.document/directory"
+        ANDROID_DIRECTORY
     } else {
         toString()
     }
@@ -41,10 +41,11 @@ value class MimeType(private val value: String) {
 
     companion object {
 
-        const val ANY = "*"
+        const val WILDCARD = "*"
 
         val DIRECTORY = MimeType("inode/directory")
         val UNKNOWN = MimeType("application/octet-stream")
+        val ANY = MimeType("*/*")
 
         fun String.toMimeTypeOrNull(): MimeType? = if (REGEX_MIME.matches(this)) {
             MimeType(substringBefore(';').lowercase())
@@ -75,6 +76,7 @@ value class MimeType(private val value: String) {
             "x-bzip",
             "x-freearc",
         )
+        private const val ANDROID_DIRECTORY = "vnd.android.document/directory"
 
         private fun getNormalizedExtension(name: String): String? = name
             .lowercase()

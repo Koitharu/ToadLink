@@ -1,5 +1,7 @@
 package org.koitharu.toadlink.editor
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -53,10 +55,11 @@ import org.koitharu.toadlink.editor.DeviceEditorIntent.ToggleAutoConnect
 import org.koitharu.toadlink.editor.DeviceEditorIntent.ToggleConnectNow
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateAlias
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateHostname
-import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateKey
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePassword
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePort
+import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdatePrivateKey
 import org.koitharu.toadlink.editor.DeviceEditorIntent.UpdateUsername
+import org.koitharu.toadlink.files.fs.MimeType
 import org.koitharu.toadlink.nav.ControlDestination
 import org.koitharu.toadlink.ui.R
 import org.koitharu.toadlink.ui.composables.BackNavigationIcon
@@ -256,16 +259,36 @@ private fun AddDeviceContent(
                     }
                 )
 
+                val privateKeyPicker = rememberLauncherForActivityResult(
+                    ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    if (uri != null) {
+                        handleIntent(DeviceEditorIntent.LoadPrivateKey(uri))
+                    }
+                }
+
                 TextField(
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                    value = state.key,
-                    onValueChange = { handleIntent(UpdateKey(it)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    value = state.privateKey,
+                    onValueChange = { handleIntent(UpdatePrivateKey(it)) },
                     label = { Text(stringResource(R.string.private_key)) },
                     enabled = !state.isLoading,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Ascii,
                         imeAction = ImeAction.Next,
                     ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { privateKeyPicker.launch(arrayOf(MimeType.ANY.toString())) }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_folder_open),
+                                contentDescription = stringResource(R.string.select_file)
+                            )
+                        }
+                    }
                 )
 
                 Text(

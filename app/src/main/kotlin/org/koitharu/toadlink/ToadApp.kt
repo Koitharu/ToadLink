@@ -7,6 +7,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.request.crossfade
+import coil3.svg.SvgDecoder
 import coil3.util.DebugLogger
 import coil3.util.Logger
 import dagger.hilt.android.HiltAndroidApp
@@ -38,6 +39,7 @@ class ToadApp : Application(), SingletonImageLoader.Factory {
         .components {
             add(SshThumbnailFetcher.Factory(connectionManager))
             add(SshImageFetcher.Factory(connectionManager))
+            add(SvgDecoder.Factory())
         }.build()
 
     private fun observeConnection() {

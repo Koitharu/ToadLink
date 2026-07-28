@@ -2,6 +2,7 @@ package org.koitharu.toadlink.files.fs
 
 import androidx.compose.runtime.Immutable
 import okio.Path
+import org.koitharu.toadlink.client.fileUri
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.files.data.XdgUserDir
 
@@ -28,14 +29,5 @@ data class SshFile(
     val isDirectory: Boolean
         get() = type == MimeType.DIRECTORY
 
-    val uri: String = buildString {
-        append("ssh://")
-        append(host.hostname)
-        append(':')
-        append(host.port)
-        if (!path.isAbsolute) {
-            append('/')
-        }
-        append(path)
-    }
+    val thumbnailUri: String = host.fileUri(path.toString(), "thumb")
 }

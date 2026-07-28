@@ -19,6 +19,6 @@ data class Thumbnailer(
 
     fun isSupported(mimeType: MimeType) = mimeTypes.any { type ->
         type.type == mimeType.type &&
-                (type.subtype == MimeType.ANY || type.subtype == mimeType.subtype)
+                (type.subtype == MimeType.WILDCARD || type.subtype == mimeType.subtype)
     }
 }

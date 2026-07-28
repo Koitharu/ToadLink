@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -22,6 +24,7 @@ import org.koitharu.toadlink.client.SshConnectionManager
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.mpris.MPRISClient
+import org.koitharu.toadlink.mpris.PlayerName
 import org.koitharu.toadlink.mpris.PlayerState
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Next
 import org.koitharu.toadlink.mpris.ui.PlayerControlAction.Pause
@@ -60,6 +63,7 @@ internal class PlayerControlViewModel @AssistedInject constructor(
                 if (it == null) {
                     state.value = PlayerControlState.NotPlaying
                 } else {
+                    state.value = PlayerControlState.Loading
                     val isSupported = runCatchingCancellable {
                         it.isSupported()
                     }.getOrDefault(true)
@@ -105,11 +109,12 @@ internal class PlayerControlViewModel @AssistedInject constructor(
     private suspend fun MPRISClient.observeAll() {
         currentPlayer.flatMapLatest { player ->
             observePlayerState(player)
-        }.catch { error ->
-            emit(PlayerControlState.Error(error))
-        }.collectLatest { newState ->
-            state.value = newState
-        }
+        }.retry()
+            .catch { error ->
+                emit(PlayerControlState.Error(error))
+            }.collectLatest { newState ->
+                state.value = newState
+            }
     }
 
     private fun MPRISClient.observePlayerState(player: String?) = combine(
@@ -121,13 +126,29 @@ internal class PlayerControlViewModel @AssistedInject constructor(
         if (state == PlayerState.UNKNOWN && metadata == null) {
             PlayerControlState.NotPlaying
         } else {
-            PlayerControlState.Player(
-                state = state,
-                metadata = metadata,
-                isLoading = processing,
-                players = players,
-                selectedPlayer = player ?: metadata?.playerName,
-            )
+            if (updateCurrentPlayer(players)) {
+                null
+            } else {
+                PlayerControlState.Player(
+                    state = state,
+                    metadata = metadata,
+                    isLoading = processing,
+                    players = players,
+                    selectedPlayer = player ?: metadata?.playerName,
+                )
+            }
+        }
+    }.filterNotNull()
+
+    private fun updateCurrentPlayer(availablePlayers: List<PlayerName>): Boolean {
+        if (availablePlayers.isEmpty()) {
+            return false
+        }
+        val p = currentPlayer.value
+        if (availablePlayers.none { it.dbusName == p }) {
+            return currentPlayer.compareAndSet(p, availablePlayers.first().dbusName)
+        } else {
+            return false
         }
     }
 

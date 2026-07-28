@@ -1,10 +1,13 @@
 package org.koitharu.toadlink.editor
 
+import android.content.ContentResolver
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -30,6 +33,7 @@ class DeviceEditorViewModel @AssistedInject constructor(
     @Assisted deviceId: Int,
     @Assisted initialAddress: String?,
     private val storage: DevicesRepository,
+    private val contentResolver: ContentResolver,
     private val sshConnectionManager: SshConnectionManager,
 ) : MviViewModel<DeviceEditorState, DeviceEditorIntent, DeviceEditorEffect>(
     DeviceEditorState(initialAddress, deviceId == 0)
@@ -79,9 +83,11 @@ class DeviceEditorViewModel @AssistedInject constructor(
             it.copy(autoConnect = !it.autoConnect)
         }
 
-        is DeviceEditorIntent.UpdateKey -> state.update {
-            it.copy(key = intent.value)
+        is DeviceEditorIntent.UpdatePrivateKey -> state.update {
+            it.copy(privateKey = intent.value)
         }
+
+        is DeviceEditorIntent.LoadPrivateKey -> loadPrivateKey(intent.uri)
 
         SaveDevice -> addDevice()
     }
@@ -103,10 +109,15 @@ class DeviceEditorViewModel @AssistedInject constructor(
                     alias = snapshot.alias.trim().nullIfEmpty(),
                     username = snapshot.username,
                     password = snapshot.password,
-                    key = snapshot.key.trim().nullIfEmpty(),
+                    privateKey = snapshot.privateKey.trim().nullIfEmpty(),
                     lastConnect = null,
                     connectAutomatically = snapshot.autoConnect,
                 )
+                data.privateKey?.let { key ->
+                    check(SshConnectionManager.isPrivateKeyData(key)) {
+                        "Not a valid private key"
+                    }
+                }
                 if (snapshot.connectNow) {
                     sshConnectionManager.testConnection(data)
                 }
@@ -132,6 +143,29 @@ class DeviceEditorViewModel @AssistedInject constructor(
             else -> 0
         }
     )
+
+    private fun loadPrivateKey(uri: Uri) {
+        viewModelScope.launch(Dispatchers.Default) {
+            state.update { it.copy(isLoading = true) }
+            try {
+                val key = checkNotNull(contentResolver.openInputStream(uri)).bufferedReader().use {
+                    it.readText()
+                }
+                check(SshConnectionManager.isPrivateKeyData(key)) {
+                    "Not a valid private key file"
+                }
+                state.update {
+                    it.copy(privateKey = key)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                sendEffect(OnError(e))
+            } finally {
+                state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
 
     @AssistedFactory
     interface Factory {

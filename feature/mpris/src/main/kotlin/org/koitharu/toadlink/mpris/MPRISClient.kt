@@ -2,6 +2,7 @@ package org.koitharu.toadlink.mpris
 
 import androidx.annotation.FloatRange
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -9,11 +10,15 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import org.koitharu.toadlink.client.exceptions.RemoteProcessException
 import org.koitharu.toadlink.client.SshConnection
+import org.koitharu.toadlink.client.exceptions.RemoteProcessException
+import org.koitharu.toadlink.client.fileUri
 import org.koitharu.toadlink.core.DeviceDescriptor
 import org.koitharu.toadlink.core.util.logErrors
+import org.koitharu.toadlink.core.util.nullIfEmpty
+import org.koitharu.toadlink.core.util.runCatchingCancellable
 import org.koitharu.toadlink.core.util.tickerFlow
+import java.util.Collections
 import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.seconds
 
@@ -23,6 +28,8 @@ class MPRISClient(
 
     val device: DeviceDescriptor
         get() = connection.host
+
+    private val playersCache = Collections.synchronizedMap(HashMap<String, PlayerName>())
 
     suspend fun isSupported(): Boolean = try {
         connection.execute("playerctl --version").startsWith("v")
@@ -98,9 +105,47 @@ class MPRISClient(
         return connection.execute("playerctl volume".withPlayer(player)).toFloat()
     }
 
-    suspend fun getPlayersList(): ImmutableList<String> {
-        return connection.execute("playerctl --list-all").lines().toImmutableList()
+    suspend fun getPlayersList(): ImmutableList<String> = try {
+        connection.execute("playerctl --list-all").lines().toImmutableList()
+    } catch (e: RemoteProcessException) {
+        persistentListOf()
     }
+
+    suspend fun getPlayersListWithNames(): ImmutableList<PlayerName> {
+        return try {
+            connection.execute("playerctl --list-all").lines()
+        } catch (e: RemoteProcessException) {
+            return persistentListOf()
+        }.map { dbusName ->
+            playersCache.getOrPut(dbusName) {
+                PlayerName(
+                    dbusName = dbusName,
+                    appName = getPlayerName(dbusName),
+                    icon = getPlayerIcon(dbusName)?.let {
+                        connection.host.fileUri(it)
+                    },
+                )
+            }
+        }.toImmutableList()
+    }
+
+    suspend fun getPlayerName(player: String): String? = runCatchingCancellable {
+        connection.execute(
+            ("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.%s /org/mpris/MediaPlayer2 " +
+                    "org.freedesktop.DBus.Properties.Get string:\"org.mpris.MediaPlayer2\" string:\"Identity\" " +
+                    "| awk -F '\"' '/string/ {print $2}'").format(player)
+        ).nullIfEmpty()
+    }.getOrNull()
+
+    suspend fun getPlayerIcon(player: String): String? = runCatchingCancellable {
+        connection.execute(
+            ("(NAME=$(gdbus call --session --dest org.mpris.MediaPlayer2.%s " +
+                    "--object-path /org/mpris/MediaPlayer2 --method org.freedesktop.DBus.Properties.Get " +
+                    "org.mpris.MediaPlayer2 DesktopEntry | cut -d\"'\" -f2); find /usr/share/icons/ ~/.local/share/icons/ " +
+                    $$"-name \"$NAME-symbolic.svg\" -o -name \"$NAME.svg\" -o -name \"$NAME.png\" 2>/dev/null " +
+                    "| sort -r | head -n 1)").format(player)
+        ).nullIfEmpty()
+    }.getOrNull()
 
     suspend fun getState(player: String? = null): PlayerState {
         return parseState(connection.execute("playerctl status".withPlayer(player)))
@@ -136,9 +181,9 @@ class MPRISClient(
             .flowOn(Dispatchers.Default)
     }
 
-    fun observeRunningPlayers(): Flow<ImmutableList<String>> {
+    fun observeRunningPlayers(): Flow<ImmutableList<PlayerName>> {
         return tickerFlow(10.seconds)
-            .map { getPlayersList() }
+            .map { getPlayersListWithNames() }
             .distinctUntilChanged()
             .logErrors()
             .flowOn(Dispatchers.Default)

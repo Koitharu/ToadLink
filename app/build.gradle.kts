@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
     implementation(libs.okio)
 
     implementation(libs.kotlinx.coroutines.android)

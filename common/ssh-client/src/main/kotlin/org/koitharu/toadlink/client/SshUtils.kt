@@ -36,6 +36,25 @@ public suspend fun SshConnection.getCmdCompletion(cmdline: String): ImmutableLis
     return res.lines().distinct().toImmutableList()
 }
 
+public fun DeviceDescriptor.fileUri(
+    path: String,
+    extraScheme: String? = null
+): String = buildString {
+    append("ssh")
+    if (!extraScheme.isNullOrEmpty()) {
+        append('+')
+        append(extraScheme)
+    }
+    append("://")
+    append(hostname)
+    append(':')
+    append(port)
+    if (!path.startsWith('/')) {
+        append('/')
+    }
+    append(path)
+}
+
 public suspend fun SshConnection.scp(source: Path, target: File): Long =
     runInterruptible(Dispatchers.IO) {
         target.sink().buffer().use { output ->
@@ -58,14 +77,14 @@ internal fun DeviceDescriptor.createClient(): SshClient {
     val config = SshClientConfig {
         host = this@createClient.hostname
         port = this@createClient.port
-        preferPasswordAuth = this@createClient.key == null
+        preferPasswordAuth = this@createClient.privateKey == null
         hostKeyVerifier = AppHostKeyVerifier()
     }
     return SshClient(config)
 }
 
 internal suspend fun SshClient.authenticate(descriptor: DeviceDescriptor): AuthResult {
-    return descriptor.key?.let { key ->
+    return descriptor.privateKey?.let { key ->
         authenticatePublicKey(
             username = descriptor.username,
             privateKeyData = key,

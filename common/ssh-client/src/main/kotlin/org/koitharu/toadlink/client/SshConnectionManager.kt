@@ -84,4 +84,15 @@ public class SshConnectionManager(
             }
         }
     }
+
+    public companion object {
+
+        public fun isPrivateKeyData(keyData: String): Boolean {
+            val trimmed = keyData.trimStart()
+            return trimmed.startsWith("-----BEGIN OPENSSH PRIVATE KEY-----")
+                    || trimmed.startsWith("-----BEGIN RSA PRIVATE KEY-----")
+                    || trimmed.startsWith("-----BEGIN EC PRIVATE KEY-----")
+                    || trimmed.startsWith("-----BEGIN PRIVATE KEY-----")
+        }
+    }
 }

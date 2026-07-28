@@ -72,7 +72,7 @@ class SshThumbnailFetcher(
             data: Uri,
             options: Options,
             imageLoader: ImageLoader,
-        ): Fetcher? = if (data.isSSH() && options.size.isThumbnail()) {
+        ): Fetcher? = if (data.isSSHThumbnail()) {
             SshThumbnailFetcher(
                 data = data,
                 options = options,
@@ -88,15 +88,7 @@ class SshThumbnailFetcher(
 
         const val SIZE_MAX = 500
 
-        fun Uri.isSSH() = scheme == "ssh"
-
-        fun Size.isThumbnail(): Boolean {
-            val maxDimension = maxOf(
-                width.pxOrElse { -1 },
-                height.pxOrElse { -1 }
-            )
-            return maxDimension in 1..SIZE_MAX
-        }
+        fun Uri.isSSHThumbnail() = scheme == "ssh+thumb"
 
         @Px
         fun Size.singleSize(): Int = maxOf(

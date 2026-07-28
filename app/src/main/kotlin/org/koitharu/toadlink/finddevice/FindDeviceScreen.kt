@@ -14,13 +14,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -89,11 +87,9 @@ private fun FindDeviceContent(
     snackbarHostState: SnackbarHostState,
     handleIntent: MviIntentHandler<FindDeviceIntent>,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            MediumTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.app_name),
@@ -101,7 +97,6 @@ private fun FindDeviceContent(
                         overflow = TextOverflow.Ellipsis
                     )
                 },
-                scrollBehavior = scrollBehavior,
                 actions = {
                     FindDeviceMenu(handleIntent)
                 }
@@ -112,17 +107,16 @@ private fun FindDeviceContent(
         },
         content = { contentPadding ->
             PullToRefreshBox(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding),
                 isRefreshing = false,
                 onRefresh = {
                     handleIntent(FindDeviceIntent.Refresh)
                 }
             ) {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .nestedScroll(scrollBehavior.nestedScrollConnection),
-                    contentPadding = contentPadding
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     if (state.savedDevices.isNotEmpty()) {
                         item {
@@ -336,7 +330,7 @@ private fun FindDevicePreview() {
                     alias = "Laptop",
                     username = "",
                     password = "",
-                    key = null,
+                    privateKey = null,
                     lastConnect = (Clock.System.now() - 10.hours).toLocalDateTime(TimeZone.UTC),
                     connectAutomatically = false,
                 ),
@@ -347,7 +341,7 @@ private fun FindDevicePreview() {
                     alias = null,
                     username = "",
                     password = "",
-                    key = null,
+                    privateKey = null,
                     lastConnect = null,
                     connectAutomatically = false,
                 )

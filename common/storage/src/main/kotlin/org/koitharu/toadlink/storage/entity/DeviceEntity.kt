@@ -16,7 +16,7 @@ import kotlin.time.Instant
         Index("hostname", "port", "username", unique = true)
     ]
 )
-internal data class DeviceEntity(
+internal class DeviceEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id", index = true) val id: Int,
     @ColumnInfo("hostname") val hostname: String,
@@ -37,7 +37,7 @@ internal data class DeviceEntity(
         username = descriptor.username,
         password = descriptor.password,
         lastConnect = descriptor.lastConnect?.toInstant(TimeZone.UTC)?.toEpochMilliseconds() ?: 0L,
-        key = descriptor.key,
+        key = descriptor.privateKey,
         connectAutomatically = descriptor.connectAutomatically,
     )
 
@@ -53,7 +53,7 @@ internal data class DeviceEntity(
         } else {
             Instant.fromEpochMilliseconds(lastConnect).toLocalDateTime(TimeZone.UTC)
         },
-        key = key,
+        privateKey = key,
         connectAutomatically = connectAutomatically,
     )
 }
